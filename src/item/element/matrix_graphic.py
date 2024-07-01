@@ -93,17 +93,3 @@ class MatrixGraphic(QWidget):
             watcher.size_width = self.each_cell_width
 
         return super().eventFilter(watcher, event)
-
-    # def paintEvent(self, event: QPaintEvent):
-    #     painter = QPainter(self)
-
-    #     for row in range(self.row_count):
-    #         for column in range(self.column_count):
-    #             color_rect = self.valueToRgb(self.matrix[row, column])
-    #             rectf = QRectF(column*self.each_cell_width, row*self.each_cell_height, self.each_cell_width, self.each_cell_height)
-
-    #             painter.setBrush(color_rect)
-    #             painter.setPen(color_rect)
-    #             painter.drawRect(rectf)
-
-    # return super().paintEvent(event)
