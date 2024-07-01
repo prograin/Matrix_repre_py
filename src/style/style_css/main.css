@@ -1,0 +1,9 @@
+QSplitter::handle {
+  background-color: aqua;
+}
+QSplitter::handle:horizontal {
+  width: 5px;
+}
+QSplitter::handle:vertical {
+  height: 5px;
+}
