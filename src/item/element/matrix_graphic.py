@@ -8,49 +8,13 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 
-class MatrixWidget(QFrame):
-    def __init__(self, row, column, width, height, color, parent=None):
-        super().__init__(parent)
-
-        self.size_width = width
-        self.size_height = height
-        self.color = color
-        self.row = row
-        self.column = column
-
-        self.initWidget()
-
-    def initWidget(self):
-        self.installEventFilter(self.parent())
-        self.setAutoFillBackground(True)
-        self.setVisible(True)
-
-    def paintEvent(self, a0: QPaintEvent) -> None:
-        painter = QPainter(self)
-
-        painter.setBrush(self.color)
-        painter.setPen(self.color)
-
-        self.setFixedSize(self.size_width, self.size_height)
-        self.move(self.column*self.size_width, self.row*self.size_height)
-
-        painter.drawRect(self.rect())
-
-        return super().paintEvent(a0)
-
-
-"----------------------------------------------------------------------------------------------------------------------"
-"----------------------------------------------------------------------------------------------------------------------"
-"----------------------------------------------------------------------------------------------------------------------"
-
-
 class MatrixGraphic(QWidget):
     def __init__(self, parent) -> None:
         super().__init__(parent)
         self.installEventFilter(self)
 
-        self.row_count = 1
-        self.column_count = 1
+        self.row_count = 0
+        self.column_count = 0
 
     def visualizeMatrix(self, matrix: np.ndarray):
         self.clear()
@@ -59,11 +23,6 @@ class MatrixGraphic(QWidget):
 
         self.each_cell_width = (self.size().width())/self.column_count
         self.each_cell_height = (self.size().height())/self.row_count
-
-        for row in range(self.row_count):
-            for column in range(self.column_count):
-                color_rect = self.valueToRgb(self.matrix[row, column])
-                MatrixWidget(row, column, self.each_cell_width, self.each_cell_height, color_rect, self)
 
     def clear(self):
         widget_child = self.findChildren(QWidget)
@@ -87,9 +46,16 @@ class MatrixGraphic(QWidget):
 
         return super().resizeEvent(event)
 
-    def eventFilter(self, watcher: QObject, event: QEvent) -> bool:
-        if isinstance(watcher, MatrixWidget):
-            watcher.size_height = self.each_cell_height
-            watcher.size_width = self.each_cell_width
+    def paintEvent(self, event: QPaintEvent):
+        painter = QPainter(self)
 
-        return super().eventFilter(watcher, event)
+        for row in range(self.row_count):
+            for column in range(self.column_count):
+                color_rect = self.valueToRgb(self.matrix[row, column])
+                rectf = QRectF(column*self.each_cell_width, row*self.each_cell_height, self.each_cell_width, self.each_cell_height)
+
+                painter.setBrush(color_rect)
+                painter.setPen(color_rect)
+                painter.drawRect(rectf)
+
+        return super().paintEvent(event)
