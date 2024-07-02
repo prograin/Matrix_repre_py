@@ -3,6 +3,7 @@ from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 
 from .matrix_perspective import MatrixPerspective
+# from ...cython_module.matrix_graphic import MatrixGraphic
 from .matrix_graphic import MatrixGraphic
 
 
