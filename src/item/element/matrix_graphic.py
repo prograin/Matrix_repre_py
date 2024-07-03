@@ -13,16 +13,20 @@ class MatrixGraphic(QWidget):
         super().__init__(parent)
         self.installEventFilter(self)
 
+        self.update_matrix = False
         self.row_count = 0
         self.column_count = 0
 
     def visualizeMatrix(self, matrix: np.ndarray):
         self.clear()
+        self.update_matrix = True
         self.matrix = matrix
         self.row_count, self.column_count = matrix.shape
 
         self.each_cell_width = (self.size().width())/self.column_count
         self.each_cell_height = (self.size().height())/self.row_count
+
+        self.update()
 
     def clear(self):
         widget_child = self.findChildren(QWidget)
@@ -49,13 +53,36 @@ class MatrixGraphic(QWidget):
     def paintEvent(self, event: QPaintEvent):
         painter = QPainter(self)
 
-        for row in range(self.row_count):
-            for column in range(self.column_count):
-                color_rect = self.valueToRgb(self.matrix[row, column])
-                rectf = QRectF(column*self.each_cell_width, row*self.each_cell_height, self.each_cell_width, self.each_cell_height)
+        if self.update_matrix:
+            for row in range(self.row_count):
+                for column in range(self.column_count):
 
-                painter.setBrush(color_rect)
-                painter.setPen(color_rect)
-                painter.drawRect(rectf)
+                    pixmap = QPixmap(QSize(self.each_cell_width, self.each_cell_height))
+                    pixmap_painter = QPainter(pixmap)
+
+                    color_rect = self.valueToRgb(self.matrix[row, column])
+
+                    pixmap_painter.setBrush(color_rect)
+                    pixmap_painter.setPen(color_rect)
+                    pixmap_painter.drawRect(pixmap.rect())
+
+                    QPixmapCache.insert(f'{row}+{column}', pixmap)
+
+                    painter.drawPixmap(column*self.each_cell_width, row*self.each_cell_height, pixmap)
+                    pixmap_painter.end()
+
+            painter.end()
+            self.update_matrix = False
+
+        else:
+            for row in range(self.row_count):
+                for column in range(self.column_count):
+                    if pixmap := QPixmapCache.find(f'{row}+{column}'):
+                        pixmap = pixmap.scaled(self.each_cell_width, self.each_cell_height)
+
+                        QPixmapCache.insert(f'{row}+{column}', pixmap)
+                        painter.drawPixmap(column*self.each_cell_width, row*self.each_cell_height, pixmap)
+
+            painter.end()
 
         return super().paintEvent(event)
