@@ -17,16 +17,12 @@ class SpinBoxSize(QSpinBox):
     def initWidget(self):
         size_policy = (QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         button_symbol = QSpinBox.ButtonSymbols.NoButtons
-        style_box = 'color: {0};background-color: transparent;border: transparent;'
 
         row_align = Qt.AlignmentFlag.AlignRight
         column_align = Qt.AlignmentFlag.AlignLeft
 
-        row_color = 'orange'
-        column_color = 'cadetblue'
-
         min_value = 1
-        max_value = 1000
+        max_value = 999
 
         self.installEventFilter(self)
         self.setSizePolicy(*size_policy)
@@ -37,12 +33,11 @@ class SpinBoxSize(QSpinBox):
 
         self.setMinimumWidth(20)
 
+        self.setProperty('direction_size', self.direction)
         if self.direction == 'row':
             self.setAlignment(row_align)
-            self.setStyleSheet(style_box.format(row_color))
         else:
             self.setAlignment(column_align)
-            self.setStyleSheet(style_box.format(column_color))
 
     def eventFilter(self, watcher: QObject, event: QEvent) -> bool:
         if event.type() == QEvent.Type.FocusOut:
@@ -55,66 +50,44 @@ class SpinBoxSize(QSpinBox):
         return super().eventFilter(watcher, event)
 
 
-"________________________________________________________________________________"
-"Filed for edit elemnt of the matrix"
-"________________________________________________________________________________"
+class FieldEdit(QItemDelegate):
+
+    def __init__(self, parent) -> None:
+        super().__init__(parent)
+
+    def createEditor(self, parent: QWidget, option: QStyleOptionViewItem, index: QModelIndex) -> QWidget:
+        double_spin_box = QDoubleSpinBox(parent)
+        double_spin_box.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        double_spin_box.setMaximum(99999)
+        double_spin_box.setDecimals(3)
+        double_spin_box.setButtonSymbols(QDoubleSpinBox.ButtonSymbols.NoButtons)
+        return double_spin_box
+
+    def setEditorData(self, editor: QDoubleSpinBox, index: QModelIndex) -> None:
+        editor.setValue(index.data(Qt.ItemDataRole.DisplayRole))
+        return super().setEditorData(editor, index)
+
+    def setModelData(self, editor: QDoubleSpinBox, model: QAbstractItemModel, index: QModelIndex):
+        value = editor.value()
+        model.setData(index, value, Qt.ItemDataRole.DisplayRole)
 
 
-class FieldLineEdit(QLineEdit):
-
-    editingFinished = pyqtSignal()
+class MatrixFieldModel(QStandardItemModel):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.setText("0.0")
 
-        self.initWidget()
-        self.setPro()
+    def data(self, index: QModelIndex, role: int):
+        if role == Qt.ItemDataRole.DisplayRole:
+            value = super().data(index, role)
+            if value == None:
+                self.setData(index, 0.0, Qt.ItemDataRole.DisplayRole)
+                return 0.0
+            else:
+                return value
 
-    def initWidget(self):
-        self.double_validator = QDoubleValidator()
-        self.double_validator.setRange(-1000.000, 1000.000)
-        self.double_validator.setDecimals(3)
-        self.setValidator(self.double_validator)
+        elif Qt.ItemDataRole.TextAlignmentRole:
+            item = self.itemFromIndex(index)
+            item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
-    def setPro(self):
-        minimum_width_field = 20
-        align_text = Qt.AlignmentFlag.AlignCenter
-
-        self.installEventFilter(self)
-        self.setAlignment(align_text)
-        self.setMinimumWidth(minimum_width_field)
-
-    def eventFilter(self, watcher: QObject, event: QEvent) -> bool:
-        if event.type() == QEvent.Type.KeyPress:
-            if event.key() in (Qt.Key.Key_Enter, Qt.Key.Key_Return):
-                self.clearFocus()
-
-        return super().eventFilter(watcher, event)
-
-
-"________________________________________________________________________________"
-"Label of the row and column with specific color"
-"________________________________________________________________________________"
-
-
-class HeaderLabel(QLabel):
-    def __init__(self,  orient, text, parent):
-        super().__init__(str(text), parent)
-        self.orient = orient
-
-        self.initWidget()
-        self.setPro()
-
-    def initWidget(self):
-        size_policy = (QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Expanding)
-
-        self.setSizePolicy(*size_policy)
-
-        if self.orient == 'row':
-            self.setStyleSheet('color:orange')
-        elif self.orient == 'column':
-            self.setStyleSheet('color:cadetblue')
-
-    def setPro(self):
-        self.setMinimumWidth(20)
+        return super().data(index, role)

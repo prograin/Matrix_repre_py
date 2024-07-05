@@ -1,0 +1,24 @@
+QTableView,
+QTableCornerButton,
+QHeaderView,
+QHeaderView::section,
+QWidge[type_wgt="matrix_perspective"] {
+  background-color: rgb(30, 30, 30);
+  border: rgb(30, 30, 30);
+}
+QHeaderView[orientation="vertical"] {
+  color: orange;
+}
+QHeaderView[orientation="horizontal"] {
+  color: cadetblue;
+}
+QSpinBox[direction_size="row"] {
+  color: orange;
+  background-color: transparent;
+  border: transparent;
+}
+QSpinBox[direction_size="column"] {
+  color: cadetblue;
+  background-color: transparent;
+  border: transparent;
+}

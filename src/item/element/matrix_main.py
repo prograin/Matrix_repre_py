@@ -50,6 +50,7 @@ class MatrixMainWidget(QWidget):
 
         self.h_cont_pers_l.setContentsMargins(0, 0, 0, 0)
         self.h_cont_pers_l.setSpacing(0)
+        self.h_cont_matrices_sp.setStretchFactor(1, 1)
         self.h_cont_matrices_sp.setOrientation(orient_spl)
         self.setMinimumWidth(main_minimum_width)
         self.convert_pb.setFixedWidth(width_fixed_convert_pb)
