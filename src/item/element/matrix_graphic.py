@@ -36,7 +36,7 @@ class MatrixGraphic(QWidget):
     def valueToRgb(self, value, vmin=0, vmax=1, colormap='viridis'):
         norm = plt.Normalize(vmin, vmax)
         cmap = plt.get_cmap(colormap)
-        rgba = cmap(norm(float(value/10)))
+        rgba = cmap(norm(float(value/100)))
         rgb = tuple(int(c * 255) for c in rgba[:3])
         return QColor(*rgb)
 
@@ -57,17 +57,19 @@ class MatrixGraphic(QWidget):
             for row in range(self.row_count):
                 for column in range(self.column_count):
 
-                    pixmap = QPixmap(self.size())
+                    pixmap = QPixmap(QSize(self.each_cell_width, self.each_cell_height))
+                    pixmap_painter = QPainter(pixmap)
 
-                    # pixmap_painter = QPainter(pixmap)
-
-                    # rect_f = QRectF(column*self.each_cell_width, row*self.each_cell_height, self.each_cell_width, self.each_cell_height)
                     color_rect = self.valueToRgb(self.matrix[row, column])
-                    pixmap.fill(color_rect)
+
+                    pixmap_painter.setBrush(color_rect)
+                    pixmap_painter.setPen(color_rect)
+                    pixmap_painter.drawRect(pixmap.rect())
+
                     QPixmapCache.insert(f'{row}+{column}', pixmap)
 
                     painter.drawPixmap(column*self.each_cell_width, row*self.each_cell_height, pixmap)
-                    # pixmap_painter.end()
+                    pixmap_painter.end()
 
             painter.end()
             self.update_matrix = False
@@ -76,14 +78,10 @@ class MatrixGraphic(QWidget):
             for row in range(self.row_count):
                 for column in range(self.column_count):
                     if pixmap := QPixmapCache.find(f'{row}+{column}'):
-                        pixmap = pixmap.scaled(self.size(), transformMode=Qt.TransformationMode.SmoothTransformation)
-                        # pixmap_painter = QPainter(pixmap)
-                        # rect_f = QRectF(column*self.each_cell_width, row*self.each_cell_height, self.each_cell_width, self.each_cell_height)
-                        # pixmap_painter.drawRect(rect_f)
+                        pixmap = pixmap.scaled(self.each_cell_width, self.each_cell_height)
 
                         QPixmapCache.insert(f'{row}+{column}', pixmap)
                         painter.drawPixmap(column*self.each_cell_width, row*self.each_cell_height, pixmap)
-                        # pixmap_painter.end()
 
             painter.end()
 
