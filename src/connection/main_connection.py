@@ -22,9 +22,10 @@ class MainConnection(AttrManage):
         self.matrix_formula: QTextEdit = self.main_window.findChild(QTextEdit, 'MATRIX_FORMULA')
         self.matrix_tab_wgt: QTabWidget = self.main_window.findChild(QTabWidget, 'MATRIX_TAB_WGT')
         self.add_new_matrix: QAction = self.main_window.findChild(QAction, 'ADD_NEW_MATRIX')
+        self.run_code: QAction = self.main_window.findChild(QAction, 'RUN_CODE')
 
     def setConnection(self):
-        self.matrix_formula.editingFinished.connect(self.on_formula_complete)
+        self.run_code.triggered.connect(self.on_formula_complete)
         self.matrix_tab_wgt.tabCloseRequested.connect(self.on_close_tab)
         self.add_new_matrix.triggered.connect(lambda x: self.on_add_new_matrix())
 
@@ -33,15 +34,22 @@ class MainConnection(AttrManage):
     def on_formula_complete(self):
         text_formula = self.matrix_formula.getText()
         matrix_count = self.matrix_tab_wgt.count()
+
         exec_vars = {}
-        for index in range(matrix_count-1):
+        for index in range(matrix_count):
             matrix_main_wgt = self.matrix_tab_wgt.widget(index)
             matrix_array = matrix_main_wgt.getMatrixArray()
             exec_vars[chr(65+index)] = matrix_array
+
         try:
             exec(text_formula, exec_vars)
         except:
             print("Can't run matrix formula code.")
+            return
+
+        if isinstance(exec_vars.get('Result'), np.ndarray):
+            Result = exec_vars.get('Result')
+            print(Result)
 
     "____________________________________________________________________________________"
 

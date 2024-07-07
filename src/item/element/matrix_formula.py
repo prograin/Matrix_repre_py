@@ -33,13 +33,3 @@ class MatrixFormula(QTextEdit):
         self.setFixedHeight(size_txt.height()+5)
 
         return super().paintEvent(event)
-
-    def eventFilter(self, watcher: QObject, event: QEvent) -> bool:
-        if event.type() == QEvent.Type.FocusOut:
-            self.editingFinished.emit()
-
-        if event.type() == QEvent.Type.KeyPress:
-            if event.key() in (Qt.Key.Key_Enter, Qt.Key.Key_Return):
-                self.editingFinished.emit()
-
-        return super().eventFilter(watcher, event)

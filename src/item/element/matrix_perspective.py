@@ -208,6 +208,9 @@ class MatrixPerspective(QWidget):
 
     def connectSignalSlot(self):
         self.generate_identity.clicked.connect(lambda x: self.on_generates('identity'))
+        self.generate_random.clicked.connect(lambda x: self.on_generates('random'))
+        self.generate_utri.clicked.connect(lambda x: self.on_generates('utr'))
+        self.generate_ltri.clicked.connect(lambda x: self.on_generates('ltr'))
         self.row_sb.editingFinished.connect(lambda: self.on_matrix_size_change(self.row_sb.value(), self.column_sb.value()))
         self.column_sb.editingFinished.connect(lambda: self.on_matrix_size_change(self.row_sb.value(), self.column_sb.value()))
 
@@ -225,6 +228,26 @@ class MatrixPerspective(QWidget):
         row_count = self.row_sb.value()
         column_count = self.column_sb.value()
 
+        min_ = 0
+        max_ = 10
+
         if type_ == 'identity':
             I = np.array([[1 if i == j else 0 for j in range(row_count)] for i in range(column_count)])
             self.matrix_field_edit.createField(array=I)
+
+        elif type_ == 'random':
+            R = np.random.uniform(min_, max_, (row_count, column_count))
+            R = np.round(R, 3)
+            self.matrix_field_edit.createField(array=R)
+
+        elif type_ == 'utr':
+            R = np.random.uniform(min_, max_, (row_count, column_count))
+            U = np.triu(R)
+            U = np.round(U, 3)
+            self.matrix_field_edit.createField(array=U)
+
+        elif type_ == 'ltr':
+            R = np.random.uniform(min_, max_, (row_count, column_count))
+            L = np.tril(R)
+            L = np.round(L, 3)
+            self.matrix_field_edit.createField(array=L)

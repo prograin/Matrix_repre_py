@@ -35,10 +35,10 @@ class MatrixGraphic(QWidget):
         for widget in widget_child:
             widget.destroy()
 
-    def valueToRgb(self, value, vmin=0, vmax=1, colormap='viridis'):
+    def valueToRgb(self, value, vmin=0, vmax=10, colormap='viridis'):
         norm = plt.Normalize(vmin, vmax)
         cmap = plt.get_cmap(colormap)
-        rgba = cmap(norm(float(value/10)))
+        rgba = cmap(norm(float(value)))
         rgb = tuple(int(c * 255) for c in rgba[:3])
         return QColor(*rgb)
 
