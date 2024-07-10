@@ -211,18 +211,21 @@ class MatrixPerspective(QWidget):
         self.generate_random.clicked.connect(lambda x: self.on_generates('random'))
         self.generate_utri.clicked.connect(lambda x: self.on_generates('utr'))
         self.generate_ltri.clicked.connect(lambda x: self.on_generates('ltr'))
-        self.row_sb.editingFinished.connect(lambda: self.on_matrix_size_change(self.row_sb.value(), self.column_sb.value()))
-        self.column_sb.editingFinished.connect(lambda: self.on_matrix_size_change(self.row_sb.value(), self.column_sb.value()))
+        self.row_sb.editingFinished.connect(lambda: self.on_matrix_create(self.row_sb.value(), self.column_sb.value()))
+        self.column_sb.editingFinished.connect(lambda: self.on_matrix_create(self.row_sb.value(), self.column_sb.value()))
 
-    def on_matrix_size_change(self, row_count, column_count):
-        if row_count + column_count > 40:
-            self.matrix_field_edit.setHidden(True)
-            self.max_error_value.setHidden(False)
-            self.matrix_field_edit.createField(row_count, column_count)
+    def on_matrix_create(self, row_count=None, column_count=None, array=None):
+        if isinstance(array, np.ndarray):
+            self.matrix_field_edit.createField(array=array)
         else:
-            self.matrix_field_edit.setVisible(True)
-            self.max_error_value.setHidden(True)
-            self.matrix_field_edit.createField(row_count, column_count)
+            if row_count + column_count > 40:
+                self.matrix_field_edit.setHidden(True)
+                self.max_error_value.setHidden(False)
+                self.matrix_field_edit.createField(row_count, column_count)
+            else:
+                self.matrix_field_edit.setVisible(True)
+                self.max_error_value.setHidden(True)
+                self.matrix_field_edit.createField(row_count, column_count)
 
     def on_generates(self, type_):
         row_count = self.row_sb.value()

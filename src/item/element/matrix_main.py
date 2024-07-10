@@ -65,3 +65,6 @@ class MatrixMainWidget(QWidget):
 
     def getMatrixArray(self):
         return self.matrix_pers.getMatrixArray()
+
+    def setMatrixArray(self, array):
+        self.matrix_pers.on_matrix_create(array=array)

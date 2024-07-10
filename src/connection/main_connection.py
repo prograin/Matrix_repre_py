@@ -3,6 +3,7 @@ from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 
 import numpy as np
+import sympy
 
 from ..item.element.matrix_main import MatrixMainWidget
 from ..item.element.matrix_perspective import MatrixPerspective
@@ -35,7 +36,7 @@ class MainConnection(AttrManage):
         text_formula = self.matrix_formula.getText()
         matrix_count = self.matrix_tab_wgt.count()
 
-        exec_vars = {}
+        exec_vars = {'np': np, 'sympy': sympy}
         for index in range(matrix_count):
             matrix_main_wgt = self.matrix_tab_wgt.widget(index)
             matrix_array = matrix_main_wgt.getMatrixArray()
@@ -43,13 +44,14 @@ class MainConnection(AttrManage):
 
         try:
             exec(text_formula, exec_vars)
-        except:
-            print("Can't run matrix formula code.")
+        except Exception as e:
+            print(f"Can't run matrix formula code\n{e} ")
             return
 
         if isinstance(exec_vars.get('Result'), np.ndarray):
             Result = exec_vars.get('Result')
-            print(Result)
+            matrix_result_wgt = self.matrix_tab_wgt.widget(matrix_count-1)
+            matrix_result_wgt.setMatrixArray(Result)
 
     "____________________________________________________________________________________"
 
