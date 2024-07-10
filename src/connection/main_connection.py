@@ -7,11 +7,11 @@ import sympy
 
 from ..item.element.matrix_main import MatrixMainWidget
 from ..item.element.matrix_perspective import MatrixPerspective
-
 from ..item.attribute.manage_attr import AttrManage
+from ..util.u_color_map import ColorMapping
 
 
-class MainConnection(AttrManage):
+class MainConnection(AttrManage, ColorMapping):
 
     def __init__(self) -> None:
         self.getElement()
@@ -23,11 +23,13 @@ class MainConnection(AttrManage):
         self.matrix_formula: QTextEdit = self.main_window.findChild(QTextEdit, 'MATRIX_FORMULA')
         self.matrix_tab_wgt: QTabWidget = self.main_window.findChild(QTabWidget, 'MATRIX_TAB_WGT')
         self.add_new_matrix: QAction = self.main_window.findChild(QAction, 'ADD_NEW_MATRIX')
+        self.compare_matrices: QPushButton = self.main_window.findChild(QPushButton, 'COMPARE_MATRICES')
         self.run_code: QAction = self.main_window.findChild(QAction, 'RUN_CODE')
 
     def setConnection(self):
         self.run_code.triggered.connect(self.on_formula_complete)
         self.matrix_tab_wgt.tabCloseRequested.connect(self.on_close_tab)
+        self.compare_matrices.toggled.connect(self.on_compare_matrices)
         self.add_new_matrix.triggered.connect(lambda x: self.on_add_new_matrix())
 
     "____________________________________________________________________________________"
@@ -70,6 +72,8 @@ class MainConnection(AttrManage):
     "____________________________________________________________________________________"
 
     def on_add_new_matrix(self):
+        if self.compare_matrices.isChecked():
+            return
         matrix_wgt = MatrixMainWidget(self.main_window)
 
         if self.matrix_tab_wgt.tabText(self.matrix_tab_wgt.count()-1) == 'Result':
@@ -77,7 +81,7 @@ class MainConnection(AttrManage):
         else:
             self.matrix_tab_wgt.addTab(matrix_wgt, '')
 
-        self.matrix_tab_wgt.setCurrentIndex(self.matrix_tab_wgt.count()-1)
+        self.matrix_tab_wgt.setCurrentIndex(self.matrix_tab_wgt.count()-2)
 
         self.modifyMatrixTab()
         self.addResult()
@@ -96,3 +100,53 @@ class MainConnection(AttrManage):
             self.matrix_tab_wgt.addTab(matrix_wgt, 'Result')
 
     "____________________________________________________________________________________"
+
+    def on_compare_matrices(self, state):
+        if state:
+            cont_mat_wgt = self.createCompareWgt()
+            self.compare_tab = self.matrix_tab_wgt.addTab(cont_mat_wgt, 'Compare')
+            self.matrix_tab_wgt.setCurrentIndex(self.matrix_tab_wgt.count()-1)
+
+        else:
+            if self.compare_tab:
+                self.matrix_tab_wgt.removeTab(self.compare_tab)
+
+    def createCompareWgt(self):
+        matrix_count = self.matrix_tab_wgt.count()
+        spacing = 20
+        margin = QMargins(20, 20, 20, 20)
+        tab_width = self.matrix_tab_wgt.width()
+        matrix_one_dim_size = (tab_width-((matrix_count*2)*spacing))/matrix_count
+
+        cont_matrix_wgt = QWidget()
+        h_cont_matrix_l = QHBoxLayout()
+        h_cont_matrix_l.setSpacing(spacing)
+        h_cont_matrix_l.setContentsMargins(margin)
+        cont_matrix_wgt.setLayout(h_cont_matrix_l)
+
+        for index in range(matrix_count):
+            matrix_main_wgt = self.matrix_tab_wgt.widget(index)
+            matrix_array: np.ndarray = matrix_main_wgt.getMatrixArray()
+            row_count, column_count = matrix_array.shape
+
+            pixmap = QPixmap(matrix_one_dim_size, matrix_one_dim_size)
+            painter_pixmap = QPainter(pixmap)
+            label_pixmap = QLabel()
+
+            label_pixmap.setFixedSize(QSize(matrix_one_dim_size, matrix_one_dim_size))
+
+            each_cell_width = matrix_one_dim_size/column_count
+            each_cell_height = matrix_one_dim_size/row_count
+
+            for row in range(row_count):
+                for column in range(column_count):
+                    field_value = matrix_array[row, column]
+                    color_rect = self.valueToRgb(field_value)
+                    rect_f = QRectF(column*each_cell_width, row*each_cell_height, each_cell_width, each_cell_height)
+                    painter_pixmap.fillRect(rect_f, color_rect)
+
+            painter_pixmap.end()
+            label_pixmap.setPixmap(pixmap)
+            h_cont_matrix_l.addWidget(label_pixmap)
+
+        return cont_matrix_wgt

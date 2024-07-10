@@ -1,14 +1,13 @@
 from PyQt6.QtCore import *
-from PyQt6.QtCore import QEvent, QObject
 from PyQt6.QtGui import *
-from PyQt6.QtGui import QPaintEvent
 from PyQt6.QtWidgets import *
-from matplotlib import pyplot as plt
 
 import numpy as np
 
+from ...util.u_color_map import ColorMapping
 
-class MatrixGraphic(QWidget):
+
+class MatrixGraphic(QWidget, ColorMapping):
     def __init__(self, parent) -> None:
         super().__init__(parent)
         self.installEventFilter(self)
@@ -34,13 +33,6 @@ class MatrixGraphic(QWidget):
         widget_child = self.findChildren(QWidget)
         for widget in widget_child:
             widget.destroy()
-
-    def valueToRgb(self, value, vmin=0, vmax=10, colormap='viridis'):
-        norm = plt.Normalize(vmin, vmax)
-        cmap = plt.get_cmap(colormap)
-        rgba = cmap(norm(float(value)))
-        rgb = tuple(int(c * 255) for c in rgba[:3])
-        return QColor(*rgb)
 
     def updateRects(self):
         self.rects = {}

@@ -7,6 +7,7 @@ import sys
 from .src.item.element.tool_bar import ToolBar
 from .src.item.element.matrix_formula import MatrixFormula
 from .src.item.element.matrix_main import MatrixMainWidget
+from .src.item.element.tab_widget import TabWidgetContainer
 
 from .src.item.attribute.manage_attr import AttrManage
 from .src.connection.main_connection import MainConnection
@@ -29,7 +30,7 @@ class MatrixRepreWindow(QMainWindow, AttrManage):
 
     def createWgt(self):
         self.main_wgt = QWidget(self)
-        self.matrix_tab_wgt = QTabWidget(self)
+        self.matrix_tab_wgt = TabWidgetContainer(self)
         self.tool_bar = ToolBar(self)
         self.matrix_formula = MatrixFormula(self)
 
