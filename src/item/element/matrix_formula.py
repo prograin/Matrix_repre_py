@@ -109,7 +109,7 @@ class MatrixFormula(QTextEdit):
         self.start_word = cursor.selectionStart()
         cursor.select(QTextCursor.SelectionType.LineUnderCursor)
 
-        return cursor.selectedText()[start:end]
+        return cursor.selectedText()[self.start_word:self.end_word]
 
     def getTextDot(self):
         cursor = self.textCursor()
