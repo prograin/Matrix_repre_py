@@ -2,6 +2,9 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import *
+
+import re
+
 from ..qtc.QtCustom import *
 from ...util.u_auto_completer import UAutoCompleter
 
@@ -22,6 +25,7 @@ class MatrixFormula(QTextEdit):
         place_holder = 'Write formula ....'
         scroll_bar_policy = Qt.ScrollBarPolicy.ScrollBarAlwaysOff
 
+        self.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
         self.setObjectName(OBJECT_NAME)
         self.setPlaceholderText(place_holder)
         self.installEventFilter(self)
@@ -100,18 +104,50 @@ class MatrixFormula(QTextEdit):
 
     def getTextUnderCursor(self):
         cursor = self.textCursor()
+        self.end_word = cursor.positionInBlock()
         cursor.select(QTextCursor.SelectionType.WordUnderCursor)
-        return cursor.selectedText()
+        self.start_word = cursor.selectionStart()
+        cursor.select(QTextCursor.SelectionType.LineUnderCursor)
+
+        return cursor.selectedText()[start:end]
 
     def getTextDot(self):
         cursor = self.textCursor()
+        pos_cursor = cursor.positionInBlock()
         cursor.select(QTextCursor.SelectionType.LineUnderCursor)
-        dot_text = cursor.selectedText().split('.')
+        selected_text = cursor.selectedText()
+        matches = re.finditer(r'\b\w+[.]', selected_text)
+        matches = [match_ for match_ in matches]
 
-        if len(dot_text) > 1:
-            return dot_text[-2]
-        else:
+        if len(matches) == 0:
             return ''
+
+        elif len(matches) == 1:
+            start_pos = matches[0].start()
+            end_pos = matches[0].end()
+            dot_text = selected_text[start_pos: end_pos].split('.')
+
+        else:
+            for index, match_ in enumerate(matches):
+                end_pos = match_.end()
+                start_pos = match_.start()
+
+                if pos_cursor < end_pos:
+                    if index == 0:
+                        return ''
+                    start_pos = matches[index-1].start()
+                    end_pos = matches[index-1].end()
+                    dot_text = selected_text[start_pos: end_pos].split('.')
+                    break
+
+                elif pos_cursor == end_pos:
+                    dot_text = selected_text[start_pos: end_pos].split('.')
+                    break
+
+                elif pos_cursor > end_pos:
+                    dot_text = selected_text[start_pos: end_pos].split('.')
+
+        return dot_text[-2]
 
     '_________________________________________________________________________________________________________________'
 

@@ -64,7 +64,7 @@ class FieldEdit(QItemDelegate):
         return double_spin_box
 
     def setEditorData(self, editor: QDoubleSpinBox, index: QModelIndex) -> None:
-        editor.setValue(index.data(Qt.ItemDataRole.DisplayRole))
+        editor.setValue(float(index.data(Qt.ItemDataRole.DisplayRole)))
         return super().setEditorData(editor, index)
 
     def setModelData(self, editor: QDoubleSpinBox, model: QAbstractItemModel, index: QModelIndex):

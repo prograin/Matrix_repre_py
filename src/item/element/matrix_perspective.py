@@ -21,6 +21,7 @@ class GeneratorsMatrix(QWidget):
 
         self.generate_la = QLabel('Generators')
 
+        self.zero_pb = QPushButton('Zero', self)
         self.identity_pb = QPushButton('Identity', self)
         self.random_pb = QPushButton('Random', self)
         self.utr_pb = QPushButton('Upper Tria', self)
@@ -31,6 +32,7 @@ class GeneratorsMatrix(QWidget):
         self.h_cont_l = QHBoxLayout()
 
     def assemblyWgt(self):
+        self.h_cont_l.addWidget(self.zero_pb)
         self.h_cont_l.addWidget(self.identity_pb)
         self.h_cont_l.addWidget(self.random_pb)
         self.h_cont_l.addWidget(self.utr_pb)
@@ -46,8 +48,7 @@ class GeneratorsMatrix(QWidget):
         self.utr_pb.setObjectName('GENE_UPPER_TRIA')
         self.random_pb.setObjectName('GENE_RANDOM')
         self.identity_pb.setObjectName('GENE_IDENTITY')
-
-        self.v_cont_l.setContentsMargins(0, 0, 0, 0)
+        self.zero_pb.setObjectName('GENE_ZERO')
 
         self.generate_la.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -217,6 +218,7 @@ class MatrixPerspective(QWidget):
         self.generate_utri = self.findChild(QPushButton, 'GENE_UPPER_TRIA')
         self.generate_random = self.findChild(QPushButton, 'GENE_RANDOM')
         self.generate_identity = self.findChild(QPushButton, 'GENE_IDENTITY')
+        self.generate_zero = self.findChild(QPushButton, 'GENE_ZERO')
         self.column_sb: QSpinBox = self.size_mat_wgt.getColumnSb()
         self.row_sb: QSpinBox = self.size_mat_wgt.getRowSb()
 
@@ -228,13 +230,22 @@ class MatrixPerspective(QWidget):
         self.generate_random.clicked.connect(lambda x: self.on_generates('random'))
         self.generate_utri.clicked.connect(lambda x: self.on_generates('utr'))
         self.generate_ltri.clicked.connect(lambda x: self.on_generates('ltr'))
+        self.generate_zero.clicked.connect(lambda x: self.on_generates('zero'))
         self.row_sb.editingFinished.connect(lambda: self.on_matrix_create(self.row_sb.value(), self.column_sb.value()))
         self.column_sb.editingFinished.connect(lambda: self.on_matrix_create(self.row_sb.value(), self.column_sb.value()))
 
     def on_matrix_create(self, row_count=None, column_count=None, array=None):
         if isinstance(array, np.ndarray):
-            self.size_mat_wgt.setSize(*array.shape)
-            self.matrix_field_edit.createField(array=array)
+            row_count, column_count = array.shape
+            self.size_mat_wgt.setSize(row_count, column_count)
+            if row_count + column_count > 40:
+                self.matrix_field_edit.setHidden(True)
+                self.max_error_value.setHidden(False)
+                self.matrix_field_edit.createField(array=array)
+            else:
+                self.matrix_field_edit.setVisible(True)
+                self.max_error_value.setHidden(True)
+                self.matrix_field_edit.createField(array=array)
 
         else:
             self.size_mat_wgt.setSize(row_count, column_count)
@@ -253,6 +264,10 @@ class MatrixPerspective(QWidget):
 
         min_ = 0
         max_ = 7
+
+        if type_ == 'zero':
+            Z = np.zeros((row_count, column_count))
+            self.matrix_field_edit.createField(array=Z)
 
         if type_ == 'identity':
             I = np.array([[1 if i == j else 0 for j in range(column_count)] for i in range(row_count)])
