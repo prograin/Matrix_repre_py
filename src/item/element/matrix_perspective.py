@@ -93,6 +93,16 @@ class SizeMatrixWgt(QWidget):
         self.x_la.setFixedWidth(fixed_width_x)
         self.setSizePolicy(*align_main_wgt)
 
+    def setSize(self, row, column):
+        self.row_sb.blockSignals(True)
+        self.column_sb.blockSignals(True)
+
+        self.row_sb.setValue(row)
+        self.column_sb.setValue(column)
+
+        self.row_sb.blockSignals(False)
+        self.column_sb.blockSignals(False)
+
     def getRowSb(self):
         return self.row_sb
 
@@ -134,6 +144,10 @@ class MatrixFieldEdit(QTableView):
             for row_index in range(row_count):
                 for column_index in range(column_count):
                     value = array[row_index, column_index]
+                    if type(value) == np.complex128 or type(value) == str:
+                        value = float(value)
+
+                    value = round(value, 3)
                     index = self.standard_model.index(row_index, column_index)
                     self.standard_model.setData(index, str(value), Qt.ItemDataRole.DisplayRole)
         else:
@@ -151,7 +165,10 @@ class MatrixFieldEdit(QTableView):
 
             matrix_array.append(column_array)
 
-        return np.array(matrix_array, dtype=np.double)
+        try:
+            return np.array(matrix_array, dtype=np.double)
+        except:
+            return None
 
 
 class MatrixPerspective(QWidget):
@@ -216,8 +233,11 @@ class MatrixPerspective(QWidget):
 
     def on_matrix_create(self, row_count=None, column_count=None, array=None):
         if isinstance(array, np.ndarray):
+            self.size_mat_wgt.setSize(*array.shape)
             self.matrix_field_edit.createField(array=array)
+
         else:
+            self.size_mat_wgt.setSize(row_count, column_count)
             if row_count + column_count > 40:
                 self.matrix_field_edit.setHidden(True)
                 self.max_error_value.setHidden(False)
@@ -232,10 +252,10 @@ class MatrixPerspective(QWidget):
         column_count = self.column_sb.value()
 
         min_ = 0
-        max_ = 10
+        max_ = 7
 
         if type_ == 'identity':
-            I = np.array([[1 if i == j else 0 for j in range(row_count)] for i in range(column_count)])
+            I = np.array([[1 if i == j else 0 for j in range(column_count)] for i in range(row_count)])
             self.matrix_field_edit.createField(array=I)
 
         elif type_ == 'random':

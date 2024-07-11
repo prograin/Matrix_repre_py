@@ -4,22 +4,23 @@ from PyQt6.QtWidgets import *
 
 import sys
 
-from .src.item.element.tool_bar import ToolBar
-from .src.item.element.matrix_formula import MatrixFormula
-from .src.item.element.matrix_main import MatrixMainWidget
-from .src.item.element.tab_widget import TabWidgetContainer
+from .item.element.tool_bar import ToolBar
+from .item.element.matrix_formula import MatrixFormula
+from .item.element.matrix_main import MatrixMainWidget
+from .item.element.tab_widget import TabWidgetContainer
 
-from .src.item.attribute.manage_attr import AttrManage
-from .src.connection.main_connection import MainConnection
-from .src.style.manage_style import ManageStyle
+from .item.attribute.manage_attr import AttrManage
+from .connection.main_connection import MainConnection
+from .style.manage_style import ManageStyle
+from .util.u_get_icon_path import IconPath
 
 
-class MatrixRepreWindow(QMainWindow, AttrManage):
+class MatrixRepreWindow(QMainWindow, AttrManage, IconPath):
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.setMainWindow(self)
-
+        self.initWindow()
         self.createWgt()
         self.createLay()
         self.assemblyWgt()
@@ -27,6 +28,13 @@ class MatrixRepreWindow(QMainWindow, AttrManage):
         self.setPro()
         self.startConnection()
         self.startStyleFile()
+
+    def initWindow(self):
+        window_icon_path = self.getIconPath('window.png')
+        icon = QIcon(window_icon_path)
+
+        self.setWindowIcon(icon)
+        self.setWindowTitle("MGV")
 
     def createWgt(self):
         self.main_wgt = QWidget(self)
@@ -68,5 +76,5 @@ class MatrixRepreWindow(QMainWindow, AttrManage):
 def startApp():
     app = QApplication(sys.argv)
     window = MatrixRepreWindow()
-    window.show()
+    window.showMaximized()
     app.exec()

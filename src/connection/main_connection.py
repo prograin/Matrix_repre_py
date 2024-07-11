@@ -38,7 +38,7 @@ class MainConnection(AttrManage, ColorMapping):
         text_formula = self.matrix_formula.getText()
         matrix_count = self.matrix_tab_wgt.count()
 
-        exec_vars = {'np': np, 'sympy': sympy}
+        exec_vars = {'numpy': np, 'sympy': sympy}
         for index in range(matrix_count):
             matrix_main_wgt = self.matrix_tab_wgt.widget(index)
             matrix_array = matrix_main_wgt.getMatrixArray()
@@ -103,37 +103,47 @@ class MainConnection(AttrManage, ColorMapping):
 
     def on_compare_matrices(self, state):
         if state:
+            self.matrix_formula.setHidden(True)
             cont_mat_wgt = self.createCompareWgt()
             self.compare_tab = self.matrix_tab_wgt.addTab(cont_mat_wgt, 'Compare')
             self.matrix_tab_wgt.setCurrentIndex(self.matrix_tab_wgt.count()-1)
 
         else:
+            self.matrix_formula.setHidden(False)
             if self.compare_tab:
                 self.matrix_tab_wgt.removeTab(self.compare_tab)
 
     def createCompareWgt(self):
         matrix_count = self.matrix_tab_wgt.count()
-        spacing = 20
+        h_spacing = 30
+        v_spacing = 10
         margin = QMargins(20, 20, 20, 20)
         tab_width = self.matrix_tab_wgt.width()
-        matrix_one_dim_size = (tab_width-((matrix_count*2)*spacing))/matrix_count
+        matrix_one_dim_size = (tab_width-((matrix_count*2)*h_spacing))/matrix_count
 
         cont_matrix_wgt = QWidget()
-        h_cont_matrix_l = QHBoxLayout()
-        h_cont_matrix_l.setSpacing(spacing)
-        h_cont_matrix_l.setContentsMargins(margin)
-        cont_matrix_wgt.setLayout(h_cont_matrix_l)
+        g_cont_matrix_l = QGridLayout()
+
+        g_cont_matrix_l.setHorizontalSpacing(h_spacing)
+        g_cont_matrix_l.setVerticalSpacing(v_spacing)
+        g_cont_matrix_l.setContentsMargins(margin)
+        cont_matrix_wgt.setLayout(g_cont_matrix_l)
 
         for index in range(matrix_count):
             matrix_main_wgt = self.matrix_tab_wgt.widget(index)
+            matrix_name = self.matrix_tab_wgt.tabText(index)
             matrix_array: np.ndarray = matrix_main_wgt.getMatrixArray()
             row_count, column_count = matrix_array.shape
+            min_value = round(float(np.min(matrix_array)), 4)
+            max_value = round(float(np.max(matrix_array)), 4)
 
             pixmap = QPixmap(matrix_one_dim_size, matrix_one_dim_size)
             painter_pixmap = QPainter(pixmap)
             label_pixmap = QLabel()
+            label_name = QLabel(f'{matrix_name}\n{row_count}X{column_count}')
 
-            label_pixmap.setFixedSize(QSize(matrix_one_dim_size, matrix_one_dim_size))
+            label_pixmap.setMinimumSize(10, 10)
+            label_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             each_cell_width = matrix_one_dim_size/column_count
             each_cell_height = matrix_one_dim_size/row_count
@@ -141,12 +151,13 @@ class MainConnection(AttrManage, ColorMapping):
             for row in range(row_count):
                 for column in range(column_count):
                     field_value = matrix_array[row, column]
-                    color_rect = self.valueToRgb(field_value)
+                    color_rect = self.valueToRgb(field_value, vmin=min_value, vmax=max_value)
                     rect_f = QRectF(column*each_cell_width, row*each_cell_height, each_cell_width, each_cell_height)
                     painter_pixmap.fillRect(rect_f, color_rect)
 
             painter_pixmap.end()
             label_pixmap.setPixmap(pixmap)
-            h_cont_matrix_l.addWidget(label_pixmap)
+            g_cont_matrix_l.addWidget(label_pixmap, 0, index, Qt.AlignmentFlag.AlignCenter)
+            g_cont_matrix_l.addWidget(label_name, 1, index, Qt.AlignmentFlag.AlignCenter)
 
         return cont_matrix_wgt

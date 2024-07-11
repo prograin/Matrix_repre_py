@@ -36,10 +36,12 @@ class MatrixGraphic(QWidget, ColorMapping):
 
     def updateRects(self):
         self.rects = {}
+        max_value = round(float(np.max(self.matrix)), 4)
+        min_value = round(float(np.min(self.matrix)), 4)
         for row in range(self.row_count):
             for column in range(self.column_count):
 
-                color_rect = self.valueToRgb(self.matrix[row, column])
+                color_rect = self.valueToRgb(self.matrix[row, column], vmin=min_value, vmax=max_value)
                 rect_f = QRectF(self.each_cell_width*column, self.each_cell_height*row, self.each_cell_width, self.each_cell_height)
 
                 self.rects[f'{row}+{column}'] = (rect_f, color_rect)
