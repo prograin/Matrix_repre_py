@@ -1,12 +1,14 @@
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
+from PyQt6.QtGui import QFocusEvent, QMouseEvent
 from PyQt6.QtWidgets import *
 
 import sys
 
-from .item.element.tool_bar import ToolBar
-from .item.element.matrix_formula import MatrixFormula
-from .item.element.matrix_main import MatrixMainWidget
+from .item.element.tool_bar.tool_bar import ToolBar
+from .item.element.menu_bar.menu_bar import MenuBar
+from .item.element.matrix.matrix_formula import MatrixFormula
+from .item.element.matrix.matrix_main import MatrixMainWidget
 from .item.element.tab_widget import TabWidgetContainer
 
 from .item.attribute.manage_attr import AttrManage
@@ -40,12 +42,14 @@ class MatrixRepreWindow(QMainWindow, AttrManage, IconPath):
         self.main_wgt = QWidget(self)
         self.matrix_tab_wgt = TabWidgetContainer(self)
         self.tool_bar = ToolBar(self)
+        self.menu_bar = MenuBar(self)
         self.matrix_formula = MatrixFormula(self)
 
     def createLay(self):
         self.v_main_l = QVBoxLayout()
 
     def assemblyWgt(self):
+        self.v_main_l.setMenuBar(self.menu_bar)
         self.v_main_l.addWidget(self.tool_bar)
         self.v_main_l.addWidget(self.matrix_formula)
         self.v_main_l.addWidget(self.matrix_tab_wgt)
@@ -76,5 +80,5 @@ class MatrixRepreWindow(QMainWindow, AttrManage, IconPath):
 def startApp():
     app = QApplication(sys.argv)
     window = MatrixRepreWindow()
-    window.showMaximized()
+    window.show()
     app.exec()

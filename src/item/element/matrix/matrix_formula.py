@@ -5,8 +5,8 @@ from PyQt6.QtWidgets import *
 
 import re
 
-from ..qtc.QtCustom import *
-from ...util.u_auto_completer import UAutoCompleter
+from ...qtc.QtCustom import *
+from ....util.u_auto_completer import UAutoCompleter
 
 
 class MatrixFormula(QTextEdit):
@@ -15,6 +15,7 @@ class MatrixFormula(QTextEdit):
 
     def __init__(self, parent):
         super().__init__(parent)
+        self.installEventFilter(self)
         self.setPro()
         self.connectSignalSlot()
 
@@ -151,6 +152,23 @@ class MatrixFormula(QTextEdit):
 
     '_________________________________________________________________________________________________________________'
 
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            tc = self.textCursor()
+            if len(tc.selectedText()) > 0:
+                self.auto_completer_wgt.setHidden(True)
+                return super().mouseReleaseEvent(event)
+
+            completion_prefix = self.getTextUnderCursor()
+            package_name = self.getTextDot()
+
+            if len(completion_prefix) > 0 or len(package_name) > 0:
+                self.showCompletions(completion_prefix, package_name)
+            else:
+                self.auto_completer_wgt.hide()
+
+        return super().mouseReleaseEvent(event)
+
     def keyPressEvent(self, event: QKeyEvent) -> None:
         if event.key() == Qt.Key.Key_ParenLeft or event.key() == Qt.Key.Key_ParenRight:
             self.on_paren_click()
@@ -187,6 +205,10 @@ class MatrixFormula(QTextEdit):
             self.auto_completer_wgt.hide()
 
         return super().keyReleaseEvent(event)
+
+    def focusOutEvent(self, event: QFocusEvent) -> None:
+        self.auto_completer_wgt.setHidden(True)
+        return super().focusOutEvent(event)
 
     '_________________________________________________________________________________________________________________'
 

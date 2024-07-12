@@ -1,7 +1,7 @@
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
-from ..qtc.QtCustom import *
+from ...qtc.QtCustom import *
 
 import numpy as np
 
@@ -212,6 +212,7 @@ class MatrixPerspective(QWidget):
 
         self.v_cont_l.setContentsMargins(0, 0, 0, 0)
         self.v_cont_l.setSpacing(0)
+        self.v_cont_l.setStretch(1, 1)
 
     def getElement(self):
         self.generate_ltri = self.findChild(QPushButton, 'GENE_LOWER_TRIA')

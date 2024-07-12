@@ -3,7 +3,7 @@ from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 
 from .matrix_perspective import MatrixPerspective
-from .matrix_graphic import MatrixGraphic
+from .matrix_visualizer_tab import MatrixVisualizeTab
 
 
 class MatrixMainWidget(QWidget):
@@ -14,6 +14,7 @@ class MatrixMainWidget(QWidget):
         self.createWidget()
         self.createLay()
         self.assembly()
+        self.getElement()
         self.setPro()
         self.connectSignalSlot()
 
@@ -21,7 +22,7 @@ class MatrixMainWidget(QWidget):
         self.pers_cont_wgt = QWidget(self)
         self.matrix_pers = MatrixPerspective(self)
         self.convert_pb = QPushButton('>>')
-        self.matrix_graphic = MatrixGraphic(self)
+        self.matrix_visualizer = MatrixVisualizeTab(self)
 
     def createLay(self):
         self.h_cont_pers_l = QHBoxLayout()
@@ -34,7 +35,7 @@ class MatrixMainWidget(QWidget):
         self.h_cont_pers_l.addWidget(self.convert_pb)
         self.pers_cont_wgt.setLayout(self.h_cont_pers_l)
         self.h_cont_matrices_sp.addWidget(self.pers_cont_wgt)
-        self.h_cont_matrices_sp.addWidget(self.matrix_graphic)
+        self.h_cont_matrices_sp.addWidget(self.matrix_visualizer)
 
         self.h_main_l.addWidget(self.h_cont_matrices_sp)
 
@@ -59,12 +60,18 @@ class MatrixMainWidget(QWidget):
     def connectSignalSlot(self):
         self.convert_pb.clicked.connect(self.on_conv_mat_to_graphic)
 
+    def getElement(self):
+        self.matrix_colorize_graphic = self.matrix_visualizer.getColorizeGraphic()
+
     def on_conv_mat_to_graphic(self):
         matrix_array = self.matrix_pers.getMatrixArray()
-        self.matrix_graphic.visualizeMatrix(matrix_array)
+        self.matrix_colorize_graphic.visualizeMatrix(matrix_array)
 
     def getMatrixArray(self):
         return self.matrix_pers.getMatrixArray()
 
     def setMatrixArray(self, array):
         self.matrix_pers.on_matrix_create(array=array)
+
+    def setVisibleColorizeGraphic(self, state):
+        self.matrix_colorize_graphic.setVisible(state)

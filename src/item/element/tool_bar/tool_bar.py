@@ -2,7 +2,7 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 
-from ..action.action_manage import ActionManage
+from ...action.action_manage import ActionManage
 
 
 class ToolBar(QToolBar, ActionManage):

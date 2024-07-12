@@ -5,8 +5,8 @@ from PyQt6.QtWidgets import *
 import numpy as np
 import sympy
 
-from ..item.element.matrix_main import MatrixMainWidget
-from ..item.element.matrix_perspective import MatrixPerspective
+from ..item.element.matrix.matrix_main import MatrixMainWidget
+from ..item.element.matrix.matrix_perspective import MatrixPerspective
 from ..item.attribute.manage_attr import AttrManage
 from ..util.u_color_map import ColorMapping
 
@@ -25,11 +25,15 @@ class MainConnection(AttrManage, ColorMapping):
         self.add_new_matrix: QAction = self.main_window.findChild(QAction, 'ADD_NEW_MATRIX')
         self.compare_matrices: QPushButton = self.main_window.findChild(QPushButton, 'COMPARE_MATRICES')
         self.run_code: QAction = self.main_window.findChild(QAction, 'RUN_CODE')
+        self.Matrix_colorize_show: QAction = self.main_window.findChild(QAction, 'MATRIX_COLORIZE_SHOW')
+        self.vector_show: QAction = self.main_window.findChild(QAction, 'VECTOR_SHOW')
 
     def setConnection(self):
         self.run_code.triggered.connect(self.on_formula_complete)
         self.matrix_tab_wgt.tabCloseRequested.connect(self.on_close_tab)
         self.compare_matrices.toggled.connect(self.on_compare_matrices)
+        self.Matrix_colorize_show.triggered.connect(lambda x: self.on_change_visualize_tab(self.Matrix_colorize_show))
+        self.vector_show.triggered.connect(lambda x: self.on_change_visualize_tab(self.vector_show))
         self.add_new_matrix.triggered.connect(lambda x: self.on_add_new_matrix())
 
     "____________________________________________________________________________________"
@@ -50,10 +54,14 @@ class MainConnection(AttrManage, ColorMapping):
             print(f"Can't run matrix formula code\n{e} ")
             return
 
-        if isinstance(exec_vars.get('Result'), np.ndarray):
-            Result = exec_vars.get('Result')
-            matrix_result_wgt = self.matrix_tab_wgt.widget(matrix_count-1)
-            matrix_result_wgt.setMatrixArray(Result)
+        for var in exec_vars:
+            if isinstance(exec_vars.get(var), np.ndarray):
+                if var.startswith('ADD'):
+                    self.on_add_new_matrix(exec_vars.get(var))
+                elif var == 'Result':
+                    Result = exec_vars.get('Result')
+                    matrix_result_wgt = self.matrix_tab_wgt.widget(matrix_count-1)
+                    matrix_result_wgt.setMatrixArray(Result)
 
     "____________________________________________________________________________________"
 
@@ -71,10 +79,13 @@ class MainConnection(AttrManage, ColorMapping):
 
     "____________________________________________________________________________________"
 
-    def on_add_new_matrix(self):
+    def on_add_new_matrix(self, array=None):
         if self.compare_matrices.isChecked():
             return
+
         matrix_wgt = MatrixMainWidget(self.main_window)
+        if isinstance(array, np.ndarray):
+            matrix_wgt.setMatrixArray(array)
 
         if self.matrix_tab_wgt.tabText(self.matrix_tab_wgt.count()-1) == 'Result':
             self.matrix_tab_wgt.insertTab(self.matrix_tab_wgt.count()-1, matrix_wgt, '')
@@ -157,7 +168,18 @@ class MainConnection(AttrManage, ColorMapping):
 
             painter_pixmap.end()
             label_pixmap.setPixmap(pixmap)
-            g_cont_matrix_l.addWidget(label_pixmap, 0, index, Qt.AlignmentFlag.AlignCenter)
-            g_cont_matrix_l.addWidget(label_name, 1, index, Qt.AlignmentFlag.AlignCenter)
+            g_cont_matrix_l.addWidget(label_pixmap, 0, index, Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignHCenter)
+            g_cont_matrix_l.addWidget(label_name, 1, index, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
 
         return cont_matrix_wgt
+
+    "____________________________________________________________________________________"
+
+    def on_change_visualize_tab(self, sender):
+        if sender == self.Matrix_colorize_show:
+            self.changeVisibleMatrixColorize(self.Matrix_colorize_show.isChecked())
+
+    def changeVisibleMatrixColorize(self, state):
+        for index in range(self.matrix_tab_wgt.count()):
+            matrix_main_wgt = self.matrix_tab_wgt.widget(index)
+            matrix_main_wgt.setVisibleColorizeGraphic(state)

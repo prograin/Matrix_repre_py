@@ -4,10 +4,10 @@ from PyQt6.QtWidgets import *
 
 import numpy as np
 
-from ...util.u_color_map import ColorMapping
+from ....util.u_color_map import ColorMapping
 
 
-class MatrixGraphic(QWidget, ColorMapping):
+class MatrixColorizeGraphic(QWidget, ColorMapping):
     def __init__(self, parent) -> None:
         super().__init__(parent)
         self.installEventFilter(self)
