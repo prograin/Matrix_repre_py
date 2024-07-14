@@ -26,14 +26,18 @@ class MainConnection(AttrManage, ColorMapping):
         self.compare_matrices: QPushButton = self.main_window.findChild(QPushButton, 'COMPARE_MATRICES')
         self.run_code: QAction = self.main_window.findChild(QAction, 'RUN_CODE')
         self.Matrix_colorize_show: QAction = self.main_window.findChild(QAction, 'MATRIX_COLORIZE_SHOW')
-        self.vector_show: QAction = self.main_window.findChild(QAction, 'VECTOR_SHOW')
+        self.graph_2d_show: QAction = self.main_window.findChild(QAction, 'GRAPH_2D_SHOW')
+        self.graph_2d_grid: QAction = self.main_window.findChild(QAction, 'GRAPH_2D_GRID')
+        self.graph_2d_axis: QAction = self.main_window.findChild(QAction, 'GRAPH_2D_AXIS')
 
     def setConnection(self):
         self.run_code.triggered.connect(self.on_formula_complete)
         self.matrix_tab_wgt.tabCloseRequested.connect(self.on_close_tab)
         self.compare_matrices.toggled.connect(self.on_compare_matrices)
+        self.graph_2d_grid.triggered.connect(self.on_change_graph_2d_grid)
+        self.graph_2d_axis.triggered.connect(self.on_change_graph_2d_axis)
         self.Matrix_colorize_show.triggered.connect(lambda x: self.on_change_visualize_tab(self.Matrix_colorize_show))
-        self.vector_show.triggered.connect(lambda x: self.on_change_visualize_tab(self.vector_show))
+        self.graph_2d_show.triggered.connect(lambda x: self.on_change_visualize_tab(self.graph_2d_show))
         self.add_new_matrix.triggered.connect(lambda x: self.on_add_new_matrix())
 
     "____________________________________________________________________________________"
@@ -178,8 +182,29 @@ class MainConnection(AttrManage, ColorMapping):
     def on_change_visualize_tab(self, sender):
         if sender == self.Matrix_colorize_show:
             self.changeVisibleMatrixColorize(self.Matrix_colorize_show.isChecked())
+        else:
+            self.changeVisibleGraph2d(self.graph_2d_show.isChecked())
 
     def changeVisibleMatrixColorize(self, state):
         for index in range(self.matrix_tab_wgt.count()):
             matrix_main_wgt = self.matrix_tab_wgt.widget(index)
-            matrix_main_wgt.setVisibleColorizeGraphic(state)
+            matrix_main_wgt.setVisibleGraphColorize(state, self.graph_2d_show.isChecked())
+
+    def changeVisibleGraph2d(self, state):
+        for index in range(self.matrix_tab_wgt.count()):
+            matrix_main_wgt = self.matrix_tab_wgt.widget(index)
+            matrix_main_wgt.setVisibleGraph2d(state, self.Matrix_colorize_show.isChecked())
+
+    "____________________________________________________________________________________"
+
+    def on_change_graph_2d_grid(self, state):
+        for index in range(self.matrix_tab_wgt.count()):
+            matrix_main_wgt = self.matrix_tab_wgt.widget(index)
+            matrix_graph_2d = matrix_main_wgt.getGraph2d()
+            matrix_graph_2d.setGrid(state)
+
+    def on_change_graph_2d_axis(self, state):
+        for index in range(self.matrix_tab_wgt.count()):
+            matrix_main_wgt = self.matrix_tab_wgt.widget(index)
+            matrix_graph_2d = matrix_main_wgt.getGraph2d()
+            matrix_graph_2d.setAxis(state)

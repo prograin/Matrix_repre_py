@@ -61,11 +61,13 @@ class MatrixMainWidget(QWidget):
         self.convert_pb.clicked.connect(self.on_conv_mat_to_graphic)
 
     def getElement(self):
-        self.matrix_colorize_graphic = self.matrix_visualizer.getColorizeGraphic()
+        self.graph_colorize = self.matrix_visualizer.getColorizeGraphic()
+        self.graph_2d = self.matrix_visualizer.getGraph2d()
 
     def on_conv_mat_to_graphic(self):
         matrix_array = self.matrix_pers.getMatrixArray()
-        self.matrix_colorize_graphic.visualizeMatrix(matrix_array)
+        self.graph_colorize.visualizeMatrix(matrix_array)
+        self.graph_2d.visualizeMatrix(matrix_array)
 
     def getMatrixArray(self):
         return self.matrix_pers.getMatrixArray()
@@ -73,5 +75,37 @@ class MatrixMainWidget(QWidget):
     def setMatrixArray(self, array):
         self.matrix_pers.on_matrix_create(array=array)
 
-    def setVisibleColorizeGraphic(self, state):
-        self.matrix_colorize_graphic.setVisible(state)
+    def setVisibleGraphColorize(self, state_graph_colorize, state_graph_2d):
+        self.graph_colorize.setVisible(state_graph_colorize)
+        if state_graph_colorize:
+            self.matrix_visualizer.setVisible(True)
+            self.matrix_visualizer.setCurrentIndex(0)
+            if state_graph_2d:
+                self.matrix_visualizer.tabBar().setVisible(True)
+            else:
+                self.matrix_visualizer.tabBar().setVisible(False)
+        else:
+            if state_graph_2d:
+                self.matrix_visualizer.tabBar().setVisible(False)
+                self.matrix_visualizer.setCurrentIndex(1)
+            else:
+                self.matrix_visualizer.setVisible(False)
+
+    def setVisibleGraph2d(self, state_graph_2d, state_graph_colorize):
+        self.graph_2d.setVisible(state_graph_2d)
+        if state_graph_2d:
+            self.matrix_visualizer.setVisible(True)
+            self.matrix_visualizer.setCurrentIndex(1)
+            if state_graph_colorize:
+                self.matrix_visualizer.tabBar().setVisible(True)
+            else:
+                self.matrix_visualizer.tabBar().setVisible(False)
+        else:
+            if state_graph_colorize:
+                self.matrix_visualizer.tabBar().setVisible(False)
+                self.matrix_visualizer.setCurrentIndex(0)
+            else:
+                self.matrix_visualizer.setVisible(False)
+
+    def getGraph2d(self):
+        return self.graph_2d

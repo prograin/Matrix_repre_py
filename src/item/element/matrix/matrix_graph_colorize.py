@@ -7,7 +7,7 @@ import numpy as np
 from ....util.u_color_map import ColorMapping
 
 
-class MatrixColorizeGraphic(QWidget, ColorMapping):
+class GraphColorize(QWidget, ColorMapping):
     def __init__(self, parent) -> None:
         super().__init__(parent)
         self.installEventFilter(self)
