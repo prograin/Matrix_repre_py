@@ -171,6 +171,43 @@ class MatrixFieldEdit(QTableView):
         except:
             return None
 
+    def keyPressEvent(self, event: QKeyEvent):
+        super().keyPressEvent(event)
+        event.accept()
+
+        if event.key() == Qt.Key.Key_C and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+            copied_cells: list[QModelIndex] = sorted(self.selectedIndexes())
+            copy_text = ''
+            max_column = copied_cells[-1].column()
+
+            for c in copied_cells:
+                itm = self.standard_model.itemFromIndex(c)
+                copy_text += itm.text()
+
+                if c.column() == max_column:
+                    copy_text += '\n'
+                else:
+                    copy_text += '\t'
+
+            QApplication.clipboard().setText(copy_text)
+
+        elif event.key() == Qt.Key.Key_V and (event.modifiers() & Qt.KeyboardModifier.ControlModifier):
+            selection = self.selectedIndexes()
+            if selection:
+                row_anchor = selection[0].row()
+                column_anchor = selection[0].column()
+
+                clipboard = QApplication.clipboard()
+
+                rows = clipboard.text().split("\n")
+                for index_row, row in enumerate(rows):
+                    values = row.split('\t')
+                    for index_col, value in enumerate(values):
+                        item = QStandardItem(value)
+                        self.standard_model.setItem(row_anchor + index_row,
+                                                    column_anchor+index_col,
+                                                    item)
+
 
 class MatrixPerspective(QWidget):
     def __init__(self, parent) -> None:
@@ -263,8 +300,8 @@ class MatrixPerspective(QWidget):
         row_count = self.row_sb.value()
         column_count = self.column_sb.value()
 
-        min_ = 0
-        max_ = 7
+        min_ = -5
+        max_ = 5
 
         if type_ == 'zero':
             Z = np.zeros((row_count, column_count))

@@ -1,5 +1,5 @@
 from PyQt6.QtCore import *
-from PyQt6.QtCore import QRectF
+from PyQt6.QtCore import QEvent, QRectF
 from PyQt6.QtGui import QPainter
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import *
@@ -19,6 +19,7 @@ class GraphicsScene(QGraphicsScene):
 
     def initScene(self):
         self.createCustomePen()
+        self.setSceneRect(1, 1, 1, 1)
 
     def setGrid(self, state):
         self.grid = state
@@ -31,7 +32,7 @@ class GraphicsScene(QGraphicsScene):
     def createItem(self, rect, color=Qt.GlobalColor.cyan):
         brush = QBrush(color)
         pen = QPen(color)
-        rect_item = QGraphicsRectItem()
+        rect_item = QGraphicsEllipseItem()
         rect_item.setRect(rect)
         rect_item.setBrush(brush)
         rect_item.setPen(pen)
@@ -93,16 +94,36 @@ class Graph2dView(QGraphicsView):
 
     def __init__(self, parent):
         super().__init__(parent)
+        self.position = QPointF(0, 0)
+        self.scale_factor = 1.15
+
+        self.initView()
+        self.setPro()
+
+    def initView(self):
         self.createScene()
+        self.createInfo()
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
-        self.scale_factor = 1.15
 
     def createScene(self):
         self.scene_ = GraphicsScene()
         self.setScene(self.scene_)
+
+    def createInfo(self):
+        self.setPostion(QPointF(0, 0))
+        scale = self.getScale()
+
+        position_txt = 'X : 0   Y : 0'
+        scale_txt = 'Scale : ' + str(scale)
+        self.info_la = QLabel(scale_txt+'    ' + position_txt, self)
+        self.info_la.move(0, self.viewport().height()-self.info_la.height())
+
+    def setPro(self):
+        self.info_la.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.info_la.setMaximumWidth(500)
 
     def visualizeMatrix(self, array: np.ndarray):
         self.scene_.clear()
@@ -111,14 +132,14 @@ class Graph2dView(QGraphicsView):
             for column in range(column_count):
                 vectors = array[:, column]
                 vectors = vectors*100
-                self.scene_.createItem(rect=QRectF(vectors[0], -vectors[1], 50, 50))
+                self.scene_.createItem(rect=QRectF(vectors[0], -vectors[1], 20, 20))
             return
 
         elif column_count == 2:
             for row in range(row_count):
                 vectors = array[row, :]
                 vectors = vectors*100
-                self.scene_.createItem(rect=QRectF(vectors[0], -vectors[1], 50, 50))
+                self.scene_.createItem(rect=QRectF(vectors[0], -vectors[1], 20, 20))
             return
 
     def setGrid(self, state):
@@ -127,11 +148,36 @@ class Graph2dView(QGraphicsView):
     def setAxis(self, state):
         self.scene_.setAxis(state)
 
+    def setPostion(self, pos):
+        self.position = self.position+pos
+        self.position = QPointF(round(self.position.x(), 3), round(self.position.y(), 3))
+
+    def setInfo(self):
+        pos = self.getPosition()
+        scale = self.getScale()
+
+        position_txt = 'X : '+str(pos.x())+'  ' + 'Y : ' + str(pos.x())
+        scale_txt = 'Scale : ' + str(scale)
+        self.info_la.setText(scale_txt+'   ' + position_txt)
+        self.info_la.setFixedWidth(self.info_la.sizeHint().width())
+
+    def setInfoVisible(self, state):
+        self.info_la.setVisible(state)
+
+    def getScale(self):
+        trans = self.transform()
+        return round(trans.m11(), 2)
+
+    def getPosition(self):
+        return self.position
+
     def wheelEvent(self, event):
         if event.angleDelta().y() > 0:
             self.scale(self.scale_factor, self.scale_factor)
         else:
             self.scale(1 / self.scale_factor, 1 / self.scale_factor)
+
+        self.setInfo()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
@@ -142,13 +188,28 @@ class Graph2dView(QGraphicsView):
             if self.last_mouse_pos:
                 delta = event.pos() - self.last_mouse_pos
                 scene_rect = self.scene_.sceneRect()
-                scene_rect.setX(scene_rect.x()-delta.x())
-                scene_rect.setY(scene_rect.y()-delta.y())
-                scene_rect.setSize(scene_rect.size()-QSizeF(delta.x(), delta.y()))
+                scale = self.getScale()
+                if scale < 1:
+                    scene_rect.setX(scene_rect.x()-(delta.x()/scale))
+                    scene_rect.setY(scene_rect.y()-(delta.y()/scale))
+                    scene_rect.setSize(scene_rect.size()-(QSizeF(delta.x(), delta.y())/scale))
+                    self.setPostion(QPointF(delta.x()/scale, delta.y()/scale))
+                else:
+                    scene_rect.setX(scene_rect.x()-delta.x())
+                    scene_rect.setY(scene_rect.y()-delta.y())
+                    scene_rect.setSize(scene_rect.size()-QSizeF(delta.x(), delta.y()))
+                    self.setPostion(QPointF(delta.x(), delta.y()))
+
                 self.scene_.setSceneRect(scene_rect)
+                self.setInfo()
 
                 self.last_mouse_pos = event.pos()
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
             self.last_mouse_pos = None
+
+    def viewportEvent(self, event: QEvent) -> bool:
+        if event.type() == QEvent.Type.Resize:
+            self.info_la.move(0, self.viewport().height()-self.info_la.height())
+        return super().viewportEvent(event)
