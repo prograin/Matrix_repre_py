@@ -9,6 +9,7 @@ from ..item.element.matrix.matrix_main import MatrixMainWidget
 from ..item.element.matrix.matrix_perspective import MatrixPerspective
 from ..item.attribute.manage_attr import AttrManage
 from ..util.u_color_map import ColorMapping
+from ..item.element.setting.setting_main import SettingMain
 
 
 class MainConnection(AttrManage, ColorMapping):
@@ -29,8 +30,10 @@ class MainConnection(AttrManage, ColorMapping):
         self.graph_2d_show: QAction = self.main_window.findChild(QAction, 'GRAPH_2D_SHOW')
         self.graph_2d_grid: QAction = self.main_window.findChild(QAction, 'GRAPH_2D_GRID')
         self.graph_2d_axis: QAction = self.main_window.findChild(QAction, 'GRAPH_2D_AXIS')
+        self.setting: QAction = self.main_window.findChild(QAction, 'SETTING')
 
     def setConnection(self):
+        self.setting.triggered.connect(self.on_show_setting)
         self.run_code.triggered.connect(self.on_formula_complete)
         self.matrix_tab_wgt.tabCloseRequested.connect(self.on_close_tab)
         self.compare_matrices.toggled.connect(self.on_compare_matrices)
@@ -39,6 +42,9 @@ class MainConnection(AttrManage, ColorMapping):
         self.Matrix_colorize_show.triggered.connect(lambda x: self.on_change_visualize_tab(self.Matrix_colorize_show))
         self.graph_2d_show.triggered.connect(lambda x: self.on_change_visualize_tab(self.graph_2d_show))
         self.add_new_matrix.triggered.connect(lambda x: self.on_add_new_matrix())
+
+    def on_show_setting(self):
+        SettingMain(self.main_window)
 
     "____________________________________________________________________________________"
 

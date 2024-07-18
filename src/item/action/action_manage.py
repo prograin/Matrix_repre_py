@@ -30,11 +30,13 @@ class ActionManage(AttrManage):
         return ActionManage.INSTANCE
 
     def create_menu(self):
+        ActionManage.edit = QMenu('Edit', self.main_window)
         ActionManage.show = QMenu('Show', self.main_window)
         ActionManage.display = QMenu('Display', self.main_window)
         ActionManage.display_graph_2d = QMenu('Display Graph 2D', self.main_window)
 
     def createAction(self):
+        ActionManage.setting = QAction('Setting', ActionManage.edit)
         ActionManage.graph_2d_grid = QAction('Grid', ActionManage.display_graph_2d)
         ActionManage.graph_2d_axis = QAction('Axis', ActionManage.display_graph_2d)
         ActionManage.Matrix_colorize_show = QAction('Matrix Colorize', ActionManage.show)
@@ -44,6 +46,7 @@ class ActionManage(AttrManage):
         ActionManage.spacer = QWidget()
 
     def setPro(self):
+        ActionManage.setting.setObjectName('SETTING')
         ActionManage.add_new_matrix.setObjectName('ADD_NEW_MATRIX')
         ActionManage.run_code.setObjectName('RUN_CODE')
         ActionManage.vector_show.setObjectName('GRAPH_2D_SHOW')
@@ -67,6 +70,8 @@ class ActionManage(AttrManage):
 
         ActionManage.display.addMenu(ActionManage.display_graph_2d)
 
+        ActionManage.edit.addAction(ActionManage.setting)
+
     def setDefault(self):
         ActionManage.Matrix_colorize_show.setChecked(True)
         ActionManage.graph_2d_axis.setChecked(True)
@@ -77,5 +82,6 @@ class ActionManage(AttrManage):
                 ActionManage.run_code]
 
     def menuBar(self):
-        return [ActionManage.show,
+        return [ActionManage.edit,
+                ActionManage.show,
                 ActionManage.display]

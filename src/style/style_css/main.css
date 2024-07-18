@@ -7,3 +7,7 @@ QSplitter::handle:horizontal {
 QSplitter::handle:vertical {
   height: 5px;
 }
+QToolButton[type="collapse"] {
+  background-color: transparent;
+  border: none;
+}

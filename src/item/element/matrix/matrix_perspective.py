@@ -213,12 +213,16 @@ class MatrixPerspective(QWidget):
     def __init__(self, parent) -> None:
         super().__init__(parent)
 
+        self.initWidget()
         self.createWidget()
         self.createLay()
         self.assembleWgt()
         self.getElement()
         self.setPro()
         self.connectSignalSlot()
+
+    def initWidget(self):
+        self.setting_matrix_table = QSettings('MGV', 'Matrix_Table')
 
     def createWidget(self):
         self.max_error_value = QLabel(" Size Matrix is more than 40 \n althogh you can use it for render ")
@@ -276,7 +280,8 @@ class MatrixPerspective(QWidget):
         if isinstance(array, np.ndarray):
             row_count, column_count = array.shape
             self.size_mat_wgt.setSize(row_count, column_count)
-            if row_count + column_count > 40:
+
+            if self.setting_matrix_table.value('visible_limitation', type=bool) and row_count + column_count > 40:
                 self.matrix_field_edit.setHidden(True)
                 self.max_error_value.setHidden(False)
                 self.matrix_field_edit.createField(array=array)
@@ -287,7 +292,7 @@ class MatrixPerspective(QWidget):
 
         else:
             self.size_mat_wgt.setSize(row_count, column_count)
-            if row_count + column_count > 40:
+            if self.setting_matrix_table.value('visible_limitation', type=bool) and row_count + column_count > 40:
                 self.matrix_field_edit.setHidden(True)
                 self.max_error_value.setHidden(False)
                 self.matrix_field_edit.createField(row_count, column_count)
@@ -300,8 +305,8 @@ class MatrixPerspective(QWidget):
         row_count = self.row_sb.value()
         column_count = self.column_sb.value()
 
-        min_ = -5
-        max_ = 5
+        min_ = self.setting_matrix_table.value('min_field_value', type=float)
+        max_ = self.setting_matrix_table.value('max_field_value', type=float)
 
         if type_ == 'zero':
             Z = np.zeros((row_count, column_count))

@@ -1,9 +1,10 @@
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
+from PyQt6.QtGui import QMouseEvent, QPaintEvent
 from PyQt6.QtWidgets import *
 
 from .matrix_graph_colorize import GraphColorize
-from .matrix_graph_2d import Graph2dView
+from .matrix_graph_2d import Graph2dWidget
 
 
 class MatrixVisualizeTab(QTabWidget):
@@ -24,21 +25,17 @@ class MatrixVisualizeTab(QTabWidget):
         self.graph_colorize = GraphColorize(self)
 
     def createGraph2d(self):
-        self.view_cont_wgt = QWidget()
-        self.v_view_cont_l = QVBoxLayout()
-        self.graph_2d = Graph2dView(self.view_cont_wgt)
-
-        self.v_view_cont_l.addWidget(self.graph_2d)
-        self.view_cont_wgt.setLayout(self.v_view_cont_l)
-
-        self.v_view_cont_l.setContentsMargins(0, 0, 0, 0)
+        self.graph_2d_wgt = Graph2dWidget(self)
 
     def addVisualizer(self):
         self.addTab(self.graph_colorize, 'Matrix Colorize Graphic')
-        self.addTab(self.view_cont_wgt, 'Graph 2D')
+        self.addTab(self.graph_2d_wgt, 'Graph 2D')
 
     def getColorizeGraphic(self):
         return self.graph_colorize
 
     def getGraph2d(self):
+        return self.graph_2d_wgt.view
+
+    def getGraph2dWgt(self):
         return self.graph_2d

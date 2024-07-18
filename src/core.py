@@ -1,6 +1,5 @@
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
-from PyQt6.QtGui import QFocusEvent, QMouseEvent
 from PyQt6.QtWidgets import *
 
 import sys
@@ -12,6 +11,7 @@ from .item.element.matrix.matrix_main import MatrixMainWidget
 from .item.element.tab_widget import TabWidgetContainer
 
 from .item.attribute.manage_attr import AttrManage
+from .setting.setting_manage import Settingmanage
 from .connection.main_connection import MainConnection
 from .style.manage_style import ManageStyle
 from .util.u_get_icon_path import IconPath
@@ -22,6 +22,7 @@ class MatrixRepreWindow(QMainWindow, AttrManage, IconPath):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.setMainWindow(self)
+        self.startSetting()
         self.initWindow()
         self.createWgt()
         self.createLay()
@@ -69,6 +70,9 @@ class MatrixRepreWindow(QMainWindow, AttrManage, IconPath):
         self.matrix_tab_wgt.setObjectName('MATRIX_TAB_WGT')
 
         self.matrix_tab_wgt.setTabsClosable(True)
+
+    def startSetting(self):
+        Settingmanage()
 
     def startConnection(self):
         MainConnection()

@@ -1,12 +1,62 @@
 from PyQt6.QtCore import *
-from PyQt6.QtCore import QEvent, QRectF
-from PyQt6.QtGui import QPainter
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import *
+from PyQt6.QtWidgets import QWidget
+from ...qtc.QtCustom import *
+
+from ....util.u_color import UColor
 import numpy as np
 
+# ___________________________________________________________________________________________
+# Item
 
-class GraphicsScene(QGraphicsScene):
+
+class GraphicsItem(QGraphicsItem, UColor):
+
+    def __init__(self, rectf, color) -> None:
+        super().__init__()
+
+        self.rectf = rectf
+
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
+        self.ItemColor(color)
+        self.moveToOrigin()
+
+    def moveToOrigin(self):
+        self.moveBy(-1*self.rectf.width()/2, -1 * self.rectf.height()/2)
+
+    def boundingRect(self) -> QRectF:
+        return self.rectf
+
+    def ItemColor(self, color):
+        self.pen_color = QPen(color)
+        self.brush_color = QBrush(color)
+
+    def setItemColor(self, color):
+        self.pen_color.setColor(color)
+        self.brush_color.setColor(color)
+
+    def setRectf(self, rectf):
+        self.rectf = rectf
+
+    def getColor(self):
+        return self.brush_color.color()
+
+    def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: QWidget) -> None:
+        if self.isSelected():
+            painter.setPen(self.selected_color_pen)
+        else:
+            painter.setPen(self.pen_color)
+
+        painter.setBrush(self.brush_color)
+        painter.drawRect(self.rectf)
+
+# ___________________________________________________________________________________________
+# Scene
+
+
+class GraphicsScene(QGraphicsScene, UColor):
 
     def __init__(self):
         super().__init__()
@@ -18,7 +68,6 @@ class GraphicsScene(QGraphicsScene):
         self.axis = True
 
     def initScene(self):
-        self.createCustomePen()
         self.setSceneRect(1, 1, 1, 1)
 
     def setGrid(self, state):
@@ -30,20 +79,9 @@ class GraphicsScene(QGraphicsScene):
         self.update()
 
     def createItem(self, rect, color=Qt.GlobalColor.cyan):
-        brush = QBrush(color)
-        pen = QPen(color)
-        rect_item = QGraphicsEllipseItem()
-        rect_item.setRect(rect)
-        rect_item.setBrush(brush)
-        rect_item.setPen(pen)
-        rect_item.moveBy(-1*rect.width()/2, -1 * rect.height()/2)
+        item = GraphicsItem(rect, QColor(100, 100, 250))
 
-        self.addItem(rect_item)
-
-    def createCustomePen(self):
-        self.grid_pen = QPen(QColor(Qt.GlobalColor.darkGray), 1, Qt.PenStyle.SolidLine)
-        self.red_pen = QPen(Qt.GlobalColor.red, 2)
-        self.green_pen = QPen(Qt.GlobalColor.green, 2)
+        self.addItem(item)
 
     def drawBackground(self, painter, rect):
         super().drawBackground(painter, rect)
@@ -90,27 +128,36 @@ class GraphicsScene(QGraphicsScene):
         return super().drawForeground(painter, rect)
 
 
+# ___________________________________________________________________________________________
+# View
 class Graph2dView(QGraphicsView):
 
-    def __init__(self, parent):
+    def __init__(self, parent, attr_wgt):
         super().__init__(parent)
         self.position = QPointF(0, 0)
         self.scale_factor = 1.15
+        self.attr = attr_wgt
 
         self.initView()
         self.setPro()
+        self.connectSignalSlot()
 
     def initView(self):
         self.createScene()
+        self.createRubberBand()
         self.createInfo()
+        self.setCursor(Qt.CursorShape.OpenHandCursor)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
 
     def createScene(self):
         self.scene_ = GraphicsScene()
         self.setScene(self.scene_)
+
+    def createRubberBand(self):
+        self.rubber_item = RubberBandSelection()
+        self.scene_.addItem(self.rubber_item)
 
     def createInfo(self):
         self.setPostion(QPointF(0, 0))
@@ -125,8 +172,22 @@ class Graph2dView(QGraphicsView):
         self.info_la.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.info_la.setMaximumWidth(500)
 
+    # ----------------------------------------------------------------
+    # Signals slot
+
+    def connectSignalSlot(self):
+        self.attr.color_button.clicked.connect(self.on_change_color_items)
+
+    def on_change_color_items(self, color):
+        for item in self.scene_.selectedItems():
+            item.setItemColor(color)
+
+    # Signals slot
+    # ----------------------------------------------------------------
+
     def visualizeMatrix(self, array: np.ndarray):
         self.scene_.clear()
+        self.createRubberBand()
         row_count, column_count = array.shape
         if row_count == 2:
             for column in range(column_count):
@@ -171,6 +232,9 @@ class Graph2dView(QGraphicsView):
     def getPosition(self):
         return self.position
 
+    # ----------------------------------------------------------------
+    # Wheel Mouse Event
+
     def wheelEvent(self, event):
         if event.angleDelta().y() > 0:
             self.scale(self.scale_factor, self.scale_factor)
@@ -179,12 +243,30 @@ class Graph2dView(QGraphicsView):
 
         self.setInfo()
 
+    # ----------------------------------------------------------------
+    # Mouse Event
+
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
+
+        # Navigate scene
+        if event.button() == Qt.MouseButton.LeftButton and event.modifiers() == Qt.KeyboardModifier.AltModifier:
             self.last_mouse_pos = event.pos()
+            return
+
+        # RubberBounding
+        elif event.button() == Qt.MouseButton.LeftButton and not self.itemAt(event.pos()):
+            position_rubber = self.mapToScene(event.pos())
+            self.rubber_item.setRubberBandRect(position_rubber, QPointF(0, 0))
+            self.rubber_item.update()
+
+        return super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-        if event.buttons() & Qt.MouseButton.LeftButton:
+
+        # Navigate scene
+        if event.buttons() & Qt.MouseButton.LeftButton and event.modifiers() == Qt.KeyboardModifier.AltModifier:
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+
             if self.last_mouse_pos:
                 delta = event.pos() - self.last_mouse_pos
                 scene_rect = self.scene_.sceneRect()
@@ -205,11 +287,125 @@ class Graph2dView(QGraphicsView):
 
                 self.last_mouse_pos = event.pos()
 
+            return
+
+        # RubberBounding
+        elif event.buttons() == Qt.MouseButton.LeftButton and self.rubber_item.start_pos != None:
+            size = self.mapToScene(event.pos())-self.rubber_item.start_pos
+            self.rubber_item.setRubberBandRect(self.rubber_item.start_pos, size)
+            self.rubber_item.update()
+            return
+
+        return super().mouseMoveEvent(event)
+
     def mouseReleaseEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
+
+        # RubberBounding
+        if event.button() == Qt.MouseButton.LeftButton and self.rubber_item.start_pos != None:
+            rubber_band_rect = self.rubber_item.boundingRect()
+            selected_items = self.scene().items(rubber_band_rect)
+
+            for item in selected_items:
+                if isinstance(item, GraphicsItem):
+                    item.setSelected(True)
+
+            self.rubber_item.setRubberBandRect(None, None)
+            self.rubber_item.update()
+
+        # Navigate scene
+        elif event.button() == Qt.MouseButton.LeftButton:
+            self.setCursor(Qt.CursorShape.OpenHandCursor)
+
             self.last_mouse_pos = None
 
+        # Show Attribute Widget
+        if len(self.scene_.selectedItems()) > 0:
+            self.attr.setVisible(True)
+            self.attr.setColorButton(self.scene_.selectedItems()[-1].getColor())
+
+        else:
+            self.attr.setVisible(False)
+
+        return super().mouseReleaseEvent(event)
+
+    # ----------------------------------------------------------------
+    # Viewport Event
+
     def viewportEvent(self, event: QEvent) -> bool:
+
+        # Set Info Label
         if event.type() == QEvent.Type.Resize:
             self.info_la.move(0, self.viewport().height()-self.info_la.height())
+            self.update()
+
         return super().viewportEvent(event)
+
+
+# ___________________________________________________________________________________________
+# Attribute Widget
+class Graph2dAttr(QWidget):
+
+    def __init__(self, parent) -> None:
+        super().__init__(parent)
+
+        self.createWgt()
+        self.createLay()
+        self.assembly()
+        self.setPro()
+
+    def createWgt(self):
+        self.color_la = QLabel('Color')
+        self.color_button = ColoringLabel(self, QColor(100, 100, 250))
+
+    def createLay(self):
+        self.v_cont_l = QVBoxLayout()
+
+        self.h_color_la_l = QHBoxLayout()
+
+    def assembly(self):
+        self.h_color_la_l.addWidget(self.color_la)
+        self.h_color_la_l.addWidget(self.color_button)
+
+        self.v_cont_l.addLayout(self.h_color_la_l)
+
+        self.v_cont_l.addStretch()
+
+        self.setLayout(self.v_cont_l)
+
+    def setPro(self):
+        self.color_button.setFixedWidth(50)
+
+    def setColorButton(self, color):
+        self.color_button.setColor(color)
+
+# ___________________________________________________________________________________________
+# Containter Widget
+
+
+class Graph2dWidget(QWidget):
+
+    def __init__(self, parent) -> None:
+        super().__init__(parent)
+
+        self.createLay()
+        self.createWidget()
+        self.assembly()
+        self.setPro()
+
+    def createLay(self):
+        self.h_cont_l = QHBoxLayout()
+
+    def createWidget(self):
+        self.attr = Graph2dAttr(self)
+        self.view = Graph2dView(self, self.attr)
+
+    def assembly(self):
+        self.h_cont_l.addWidget(self.view)
+        self.h_cont_l.addWidget(self.attr)
+
+        self.setLayout(self.h_cont_l)
+
+    def setPro(self):
+        self.h_cont_l.setContentsMargins(0, 0, 0, 0)
+
+        self.attr.setHidden(True)
