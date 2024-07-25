@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QWidget
 from ...qtc.QtCustom import *
 
 from ....util.u_color import UColor
+from ...attribute.manage_attr import AttrManage
 import numpy as np
 
 # ___________________________________________________________________________________________
@@ -24,10 +25,15 @@ class GraphicsItem(QGraphicsItem, UColor):
         self.moveToOrigin()
 
     def moveToOrigin(self):
-        self.moveBy(-1*self.rectf.width()/2, -1 * self.rectf.height()/2)
+        self.setPos(self.rectf.x()-self.rectf.width()/2, -self.rectf.y()-self.rectf.height()/2)
+        self.update()
+
+    def moveTo(self, vector):
+        self.setPos(vector[0]-self.rectf.width()/2, -vector[1]-self.rectf.height()/2)
+        self.update()
 
     def boundingRect(self) -> QRectF:
-        return self.rectf
+        return QRectF(0, 0, self.rectf.width(), self.rectf.height())
 
     def ItemColor(self, color):
         self.pen_color = QPen(color)
@@ -36,6 +42,7 @@ class GraphicsItem(QGraphicsItem, UColor):
     def setItemColor(self, color):
         self.pen_color.setColor(color)
         self.brush_color.setColor(color)
+        self.update()
 
     def setRectf(self, rectf):
         self.rectf = rectf
@@ -50,7 +57,7 @@ class GraphicsItem(QGraphicsItem, UColor):
             painter.setPen(self.pen_color)
 
         painter.setBrush(self.brush_color)
-        painter.drawRect(self.rectf)
+        painter.drawRect(0, 0, self.rectf.width(), self.rectf.height())
 
 # ___________________________________________________________________________________________
 # Scene
@@ -80,8 +87,8 @@ class GraphicsScene(QGraphicsScene, UColor):
 
     def createItem(self, rect, color=Qt.GlobalColor.cyan):
         item = GraphicsItem(rect, QColor(100, 100, 250))
-
         self.addItem(item)
+        return item
 
     def drawBackground(self, painter, rect):
         super().drawBackground(painter, rect)
@@ -189,19 +196,44 @@ class Graph2dView(QGraphicsView):
         self.scene_.clear()
         self.createRubberBand()
         row_count, column_count = array.shape
+
+        self.item_list = []
+
         if row_count == 2:
             for column in range(column_count):
                 vectors = array[:, column]
-                vectors = vectors*100
-                self.scene_.createItem(rect=QRectF(vectors[0], -vectors[1], 20, 20))
+                vectors = vectors*50
+                item = self.scene_.createItem(rect=QRectF(vectors[0], vectors[1], 20, 20))
+                self.item_list.append(item)
+
             return
 
         elif column_count == 2:
             for row in range(row_count):
                 vectors = array[row, :]
-                vectors = vectors*100
-                self.scene_.createItem(rect=QRectF(vectors[0], -vectors[1], 20, 20))
+                vectors = vectors*50
+                item = self.scene_.createItem(rect=QRectF(vectors[0], vectors[1], 20, 20))
+                self.item_list.append(item)
+
+    # ----------------------------------------------------------------
+    # Move items with Animation
+
+    def moveItems(self, positions):
+        row_count, column_count = positions.shape
+        if row_count == 2:
+            for column in range(column_count):
+                vectors = positions[:, column]
+                vectors = vectors*50
+                self.item_list[column].moveTo(vectors)
+
             return
+
+        elif column_count == 2:
+            for row in range(row_count):
+                vectors = positions[row, :]
+                vectors = vectors*50
+
+                self.item_list[row].moveTo(vectors)
 
     def setGrid(self, state):
         self.scene_.setGrid(state)
@@ -238,6 +270,7 @@ class Graph2dView(QGraphicsView):
     def wheelEvent(self, event):
         if event.angleDelta().y() > 0:
             self.scale(self.scale_factor, self.scale_factor)
+
         else:
             self.scale(1 / self.scale_factor, 1 / self.scale_factor)
 
@@ -247,7 +280,6 @@ class Graph2dView(QGraphicsView):
     # Mouse Event
 
     def mousePressEvent(self, event):
-
         # Navigate scene
         if event.button() == Qt.MouseButton.LeftButton and event.modifiers() == Qt.KeyboardModifier.AltModifier:
             self.last_mouse_pos = event.pos()
@@ -257,7 +289,6 @@ class Graph2dView(QGraphicsView):
         elif event.button() == Qt.MouseButton.LeftButton and not self.itemAt(event.pos()):
             position_rubber = self.mapToScene(event.pos())
             self.rubber_item.setRubberBandRect(position_rubber, QPointF(0, 0))
-            self.rubber_item.update()
 
         return super().mousePressEvent(event)
 
@@ -293,7 +324,7 @@ class Graph2dView(QGraphicsView):
         elif event.buttons() == Qt.MouseButton.LeftButton and self.rubber_item.start_pos != None:
             size = self.mapToScene(event.pos())-self.rubber_item.start_pos
             self.rubber_item.setRubberBandRect(self.rubber_item.start_pos, size)
-            self.rubber_item.update()
+
             return
 
         return super().mouseMoveEvent(event)
@@ -310,7 +341,6 @@ class Graph2dView(QGraphicsView):
                     item.setSelected(True)
 
             self.rubber_item.setRubberBandRect(None, None)
-            self.rubber_item.update()
 
         # Navigate scene
         elif event.button() == Qt.MouseButton.LeftButton:
@@ -336,7 +366,6 @@ class Graph2dView(QGraphicsView):
         # Set Info Label
         if event.type() == QEvent.Type.Resize:
             self.info_la.move(0, self.viewport().height()-self.info_la.height())
-            self.update()
 
         return super().viewportEvent(event)
 
@@ -378,11 +407,12 @@ class Graph2dAttr(QWidget):
     def setColorButton(self, color):
         self.color_button.setColor(color)
 
+
 # ___________________________________________________________________________________________
 # Containter Widget
 
 
-class Graph2dWidget(QWidget):
+class Graph2dWidget(QWidget, AttrManage):
 
     def __init__(self, parent) -> None:
         super().__init__(parent)
@@ -391,21 +421,42 @@ class Graph2dWidget(QWidget):
         self.createWidget()
         self.assembly()
         self.setPro()
+        self.connectSigalSlot()
 
     def createLay(self):
-        self.h_cont_l = QHBoxLayout()
+        self.v_cont_l = QVBoxLayout()
+        self.h_graph_l = QHBoxLayout()
 
     def createWidget(self):
         self.attr = Graph2dAttr(self)
         self.view = Graph2dView(self, self.attr)
+        self.animation_wgt = AnimationTimeLine(self)
 
     def assembly(self):
-        self.h_cont_l.addWidget(self.view)
-        self.h_cont_l.addWidget(self.attr)
+        self.h_graph_l.addWidget(self.view)
+        self.h_graph_l.addWidget(self.attr)
 
-        self.setLayout(self.h_cont_l)
+        self.v_cont_l.addLayout(self.h_graph_l)
+        self.v_cont_l.addWidget(self.animation_wgt)
+
+        self.setLayout(self.v_cont_l)
 
     def setPro(self):
-        self.h_cont_l.setContentsMargins(0, 0, 0, 0)
+        self.v_cont_l.setContentsMargins(0, 0, 0, 0)
+        self.h_graph_l.setContentsMargins(0, 0, 0, 0)
 
         self.attr.setHidden(True)
+        self.animation_wgt.setVisible(False)
+
+    def setAnimation(self, array_dict):
+        self.frame = array_dict
+        self.animation_wgt.setFrame(array_dict)
+        self.view.visualizeMatrix(array_dict[0])
+
+        self.animation_wgt.setVisible(True)
+
+    def connectSigalSlot(self):
+        self.animation_wgt.time_slider.valueChanged.connect(self.on_frame_change)
+
+    def on_frame_change(self, frame):
+        self.view.moveItems(self.frame[frame])

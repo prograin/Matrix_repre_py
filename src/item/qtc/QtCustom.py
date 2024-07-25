@@ -1,6 +1,8 @@
 from PyQt6.QtCore import *
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
+from PyQt6.QtWidgets import QWidget
 
 
 from ...util.u_get_icon_path import IconPath
@@ -387,3 +389,75 @@ class ColoringLabel(QLabel):
         painter.drawRect(self.rect())
 
         return super().paintEvent(event)
+
+# ___________________________________________________________________________________________
+
+
+class AnimationTimeLine(QWidget):
+
+    def __init__(self, parent) -> None:
+        super().__init__(parent)
+        self.is_playing = False
+
+        self.createLay()
+        self.createWidget()
+        self.createTimer()
+        self.assembly()
+        self.connectSignalSlot()
+        self.setPro()
+
+    def createLay(self):
+        self.h_cont_l = QHBoxLayout()
+
+    def createWidget(self):
+        self.time_slider = QSlider(Qt.Orientation.Horizontal)
+        self.play_button = QPushButton()
+
+    def createTimer(self):
+        self.timer = QTimer()
+
+    def assembly(self):
+        self.h_cont_l.addWidget(self.time_slider)
+        self.h_cont_l.addWidget(self.play_button)
+
+        self.setLayout(self.h_cont_l)
+
+    def setPro(self):
+        self.time_slider.setMinimum(0)
+        self.time_slider.setMaximum(0)
+
+        self.play_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay))
+
+    def setFrame(self, frame_dict):
+        self.frame_dict = frame_dict
+
+        if isinstance(frame_dict, dict):
+            self.time_slider.setMaximum(len(frame_dict)-1)
+        else:
+            self.time_slider.setMaximum(0)
+
+    def connectSignalSlot(self):
+        self.play_button.clicked.connect(self.on_play_timeline)
+        self.timer.timeout.connect(self.on_update_slider)
+
+    def on_play_timeline(self):
+        if self.is_playing:
+            self.timer.stop()
+            self.play_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay))
+
+        else:
+            self.timer.start(100)
+            self.play_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPause))
+            if self.time_slider.value() == self.time_slider.maximum():
+                self.time_slider.setValue(0)
+
+        self.is_playing = not self.is_playing
+
+    def on_update_slider(self):
+        value = self.time_slider.value()
+        if value < self.time_slider.maximum():
+            self.time_slider.setValue(value+1)
+        else:
+            self.timer.stop()
+            self.play_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay))
+            self.is_playing = False

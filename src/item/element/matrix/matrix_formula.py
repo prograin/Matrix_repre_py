@@ -104,7 +104,7 @@ class MatrixFormula(QTextEdit):
         return (self.toPlainText())
 
     def getTextUnderCursor(self):
-        cursor = self.textCursor()
+        cursor: QTextCursor = self.textCursor()
         self.end_word = cursor.positionInBlock()
         cursor.select(QTextCursor.SelectionType.WordUnderCursor)
         self.start_word = cursor.selectionStart()

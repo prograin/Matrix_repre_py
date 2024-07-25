@@ -34,7 +34,7 @@ class MainConnection(AttrManage, ColorMapping):
 
     def setConnection(self):
         self.setting.triggered.connect(self.on_show_setting)
-        self.run_code.triggered.connect(self.on_formula_complete)
+        self.run_code.triggered.connect(self.on_formula_run)
         self.matrix_tab_wgt.tabCloseRequested.connect(self.on_close_tab)
         self.compare_matrices.toggled.connect(self.on_compare_matrices)
         self.graph_2d_grid.triggered.connect(self.on_change_graph_2d_grid)
@@ -48,7 +48,7 @@ class MainConnection(AttrManage, ColorMapping):
 
     "____________________________________________________________________________________"
 
-    def on_formula_complete(self):
+    def on_formula_run(self):
         text_formula = self.matrix_formula.getText()
         matrix_count = self.matrix_tab_wgt.count()
 
@@ -66,8 +66,21 @@ class MainConnection(AttrManage, ColorMapping):
 
         for var in exec_vars:
             if isinstance(exec_vars.get(var), np.ndarray):
+                if var.startswith('Anim_2D'):
+                    list_array = exec_vars.get(var)
+                    self.on_add_new_matrix(array=list_array, graph_2d_anim=True)
+
+                elif var.startswith('Anim_C'):
+                    list_array = exec_vars.get(var)
+                    self.on_add_new_matrix(array=list_array, colorizing_graph_anim=True)
+
+                elif var.startswith('Anim_C_AND_2D'):
+                    list_array = exec_vars.get(var)
+                    self.on_add_new_matrix(array=list_array, graph_2d_anim=True, colorizing_graph_anim=True)
+
                 if var.startswith('ADD'):
                     self.on_add_new_matrix(exec_vars.get(var))
+
                 elif var == 'Result':
                     Result = exec_vars.get('Result')
                     matrix_result_wgt = self.matrix_tab_wgt.widget(matrix_count-1)
@@ -89,14 +102,26 @@ class MainConnection(AttrManage, ColorMapping):
 
     "____________________________________________________________________________________"
 
-    def on_add_new_matrix(self, array=None):
+    def on_add_new_matrix(self, array=None, graph_2d_anim=False, colorizing_graph_anim=False):
         if self.compare_matrices.isChecked():
             return
 
-        matrix_wgt = MatrixMainWidget(self.main_window)
+        # Create animation or just set matrix
         if isinstance(array, np.ndarray):
-            matrix_wgt.setMatrixArray(array)
+            if len(array.shape) == 2:
+                matrix_wgt = MatrixMainWidget(self.main_window)
+                matrix_wgt.setMatrixArray(array)
+            elif len(array.shape) > 2:
+                matrix_wgt = MatrixMainWidget(self.main_window, isAnimation=True)
+                matrix_wgt.setMatrixArray(array)
+                matrix_wgt.createAnimation(array, graph_2d_anim, colorizing_graph_anim)
+            else:
+                matrix_wgt = MatrixMainWidget(self.main_window)
 
+        else:
+            matrix_wgt = MatrixMainWidget(self.main_window)
+
+        # Check if Result exist or not
         if self.matrix_tab_wgt.tabText(self.matrix_tab_wgt.count()-1) == 'Result':
             self.matrix_tab_wgt.insertTab(self.matrix_tab_wgt.count()-1, matrix_wgt, '')
         else:
@@ -104,6 +129,7 @@ class MainConnection(AttrManage, ColorMapping):
 
         self.matrix_tab_wgt.setCurrentIndex(self.matrix_tab_wgt.count()-2)
 
+        # Change name tab and Add Result tab if it doesn't exists
         self.modifyMatrixTab()
         self.addResult()
 
