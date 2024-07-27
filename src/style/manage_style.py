@@ -21,5 +21,6 @@ class ManageStyle(AttrManage):
             return data
 
     def setSTyleFile(self):
-        self.main_window.setStyleSheet(self.readFile('main.css') +
+        self.main_window.setStyleSheet(self.readFile('tab_widget.css') +
+                                       self.readFile('main.css') +
                                        self.readFile('matrix_perspective.css'))

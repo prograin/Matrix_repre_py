@@ -6,10 +6,9 @@ from PyQt6.QtWidgets import *
 from PyQt6.QtWidgets import QWidget
 
 from ...qtc.QtCustom import *
-from ....setting.setting_manage import Settingmanage
 
 
-class SettingMatrixTable(QWidget, Settingmanage):
+class SettingMatrixTable(QWidget):
 
     def __init__(self, parent) -> None:
         super().__init__(parent)
@@ -19,6 +18,7 @@ class SettingMatrixTable(QWidget, Settingmanage):
         self.createWgt()
         self.assembly()
         self.setPro()
+        self.setValue()
 
     def initWidget(self):
         self.setting = QSettings('MGV', 'Matrix_Table')
@@ -71,10 +71,13 @@ class SettingMatrixTable(QWidget, Settingmanage):
         self.min_field_dsb.setMinimum(-999999)
         self.max_field_dsb.setMinimum(-999999)
 
-    def showEvent(self, event) -> None:
+    def setValue(self):
         self.max_field_dsb.setValue(self.setting.value('max_field_value', type=float))
         self.min_field_dsb.setValue(self.setting.value('min_field_value', type=float))
         self.visible_limitation_cb.setChecked(self.setting.value('visible_limitation', type=bool))
+
+    def showEvent(self, event) -> None:
+        self.setValue()
 
         return super().showEvent(event)
 

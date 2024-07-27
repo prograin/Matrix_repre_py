@@ -6,7 +6,7 @@ import sys
 
 from .item.element.tool_bar.tool_bar import ToolBar
 from .item.element.menu_bar.menu_bar import MenuBar
-from .item.element.matrix.matrix_formula import MatrixFormula
+from .item.element.matrix.matrix_formula import MatrixFormulaDock
 from .item.element.matrix.matrix_main import MatrixMainWidget
 from .item.element.tab_widget import TabWidgetContainer
 
@@ -44,20 +44,20 @@ class MatrixRepreWindow(QMainWindow, AttrManage, IconPath):
         self.matrix_tab_wgt = TabWidgetContainer(self)
         self.tool_bar = ToolBar(self)
         self.menu_bar = MenuBar(self)
-        self.matrix_formula = MatrixFormula(self)
+        self.matrix_formula = MatrixFormulaDock("Formula", self)
 
     def createLay(self):
         self.v_main_l = QVBoxLayout()
 
     def assemblyWgt(self):
-        self.v_main_l.setMenuBar(self.menu_bar)
+        self.setMenuBar(self.menu_bar)
         self.v_main_l.addWidget(self.tool_bar)
-        self.v_main_l.addWidget(self.matrix_formula)
         self.v_main_l.addWidget(self.matrix_tab_wgt)
 
         self.main_wgt.setLayout(self.v_main_l)
 
         self.setCentralWidget(self.main_wgt)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.matrix_formula)
 
     def setDefaultValue(self):
         self.matrix_wgt = MatrixMainWidget(self)
@@ -70,6 +70,8 @@ class MatrixRepreWindow(QMainWindow, AttrManage, IconPath):
         self.matrix_tab_wgt.setObjectName('MATRIX_TAB_WGT')
 
         self.matrix_tab_wgt.setTabsClosable(True)
+
+        self.v_main_l.setContentsMargins(0, 0, 0, 0)
 
     def startSetting(self):
         Settingmanage()

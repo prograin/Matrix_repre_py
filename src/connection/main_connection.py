@@ -1,3 +1,5 @@
+import io
+import sys
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
@@ -21,12 +23,16 @@ class MainConnection(AttrManage, ColorMapping):
     def getElement(self):
         self.main_window: QMainWindow = self.getMainWindow()
 
+        self.matrix_formula_dock: QTextEdit = self.main_window.findChild(QDockWidget, 'FORMULA_DOCK')
         self.matrix_formula: QTextEdit = self.main_window.findChild(QTextEdit, 'MATRIX_FORMULA')
+        self.matrix_output: QTextEdit = self.main_window.findChild(QTextEdit, 'MATRIX_OUTPUT')
         self.matrix_tab_wgt: QTabWidget = self.main_window.findChild(QTabWidget, 'MATRIX_TAB_WGT')
         self.add_new_matrix: QAction = self.main_window.findChild(QAction, 'ADD_NEW_MATRIX')
         self.compare_matrices: QPushButton = self.main_window.findChild(QPushButton, 'COMPARE_MATRICES')
-        self.run_code: QAction = self.main_window.findChild(QAction, 'RUN_CODE')
-        self.Matrix_colorize_show: QAction = self.main_window.findChild(QAction, 'MATRIX_COLORIZE_SHOW')
+        self.run_code: QPushButton = self.main_window.findChild(QPushButton, 'RUN_CODE')
+        self.formula_show: QAction = self.main_window.findChild(QAction, 'FORMULA_SHOW')
+        self.matrix_table_show: QAction = self.main_window.findChild(QAction, 'MATRIX_TABLE_SHOW')
+        self.matrix_colorize_show: QAction = self.main_window.findChild(QAction, 'MATRIX_COLORIZE_SHOW')
         self.graph_2d_show: QAction = self.main_window.findChild(QAction, 'GRAPH_2D_SHOW')
         self.graph_2d_grid: QAction = self.main_window.findChild(QAction, 'GRAPH_2D_GRID')
         self.graph_2d_axis: QAction = self.main_window.findChild(QAction, 'GRAPH_2D_AXIS')
@@ -34,12 +40,14 @@ class MainConnection(AttrManage, ColorMapping):
 
     def setConnection(self):
         self.setting.triggered.connect(self.on_show_setting)
-        self.run_code.triggered.connect(self.on_formula_run)
+        self.run_code.clicked.connect(self.on_formula_run)
         self.matrix_tab_wgt.tabCloseRequested.connect(self.on_close_tab)
         self.compare_matrices.toggled.connect(self.on_compare_matrices)
+        self.formula_show.triggered.connect(self.on_show_formula_tab)
         self.graph_2d_grid.triggered.connect(self.on_change_graph_2d_grid)
         self.graph_2d_axis.triggered.connect(self.on_change_graph_2d_axis)
-        self.Matrix_colorize_show.triggered.connect(lambda x: self.on_change_visualize_tab(self.Matrix_colorize_show))
+        self.matrix_table_show.triggered.connect(lambda x: self.on_change_table_view(self.matrix_table_show.isChecked()))
+        self.matrix_colorize_show.triggered.connect(lambda x: self.on_change_visualize_tab(self.matrix_colorize_show))
         self.graph_2d_show.triggered.connect(lambda x: self.on_change_visualize_tab(self.graph_2d_show))
         self.add_new_matrix.triggered.connect(lambda x: self.on_add_new_matrix())
 
@@ -47,8 +55,12 @@ class MainConnection(AttrManage, ColorMapping):
         SettingMain(self.main_window)
 
     "____________________________________________________________________________________"
+    # Running Formula
 
     def on_formula_run(self):
+        if self.compare_matrices.isChecked():
+            return
+
         text_formula = self.matrix_formula.getText()
         matrix_count = self.matrix_tab_wgt.count()
 
@@ -58,25 +70,26 @@ class MainConnection(AttrManage, ColorMapping):
             matrix_array = matrix_main_wgt.getMatrixArray()
             exec_vars[chr(65+index)] = matrix_array
 
+        std_old = sys.stdout
         try:
+            sys.stdout = io.StringIO()
             exec(text_formula, exec_vars)
+
+            std_out = sys.stdout.getvalue()
+            self.matrix_output.setText(std_out)
+
         except Exception as e:
-            print(f"Can't run matrix formula code\n{e} ")
+            self.matrix_output.setText(f"Can't run matrix formula code\n{e}")
             return
+
+        finally:
+            sys.stdout = std_old
 
         for var in exec_vars:
             if isinstance(exec_vars.get(var), np.ndarray):
-                if var.startswith('Anim_2D'):
+                if var.startswith('Anim'):
                     list_array = exec_vars.get(var)
-                    self.on_add_new_matrix(array=list_array, graph_2d_anim=True)
-
-                elif var.startswith('Anim_C'):
-                    list_array = exec_vars.get(var)
-                    self.on_add_new_matrix(array=list_array, colorizing_graph_anim=True)
-
-                elif var.startswith('Anim_C_AND_2D'):
-                    list_array = exec_vars.get(var)
-                    self.on_add_new_matrix(array=list_array, graph_2d_anim=True, colorizing_graph_anim=True)
+                    self.on_add_new_matrix(array=list_array, animation=True)
 
                 if var.startswith('ADD'):
                     self.on_add_new_matrix(exec_vars.get(var))
@@ -86,7 +99,9 @@ class MainConnection(AttrManage, ColorMapping):
                     matrix_result_wgt = self.matrix_tab_wgt.widget(matrix_count-1)
                     matrix_result_wgt.setMatrixArray(Result)
 
+    # Running Formula
     "____________________________________________________________________________________"
+    # Close tab
 
     def on_close_tab(self, index):
         if self.matrix_tab_wgt.tabText(index) == 'Result' \
@@ -100,9 +115,11 @@ class MainConnection(AttrManage, ColorMapping):
 
         self.modifyMatrixTab()
 
+    # Close tab
     "____________________________________________________________________________________"
+    # Add new matrix and modify
 
-    def on_add_new_matrix(self, array=None, graph_2d_anim=False, colorizing_graph_anim=False):
+    def on_add_new_matrix(self, array=None, animation=False):
         if self.compare_matrices.isChecked():
             return
 
@@ -114,7 +131,7 @@ class MainConnection(AttrManage, ColorMapping):
             elif len(array.shape) > 2:
                 matrix_wgt = MatrixMainWidget(self.main_window, isAnimation=True)
                 matrix_wgt.setMatrixArray(array)
-                matrix_wgt.createAnimation(array, graph_2d_anim, colorizing_graph_anim)
+                matrix_wgt.createAnimation(array)
             else:
                 matrix_wgt = MatrixMainWidget(self.main_window)
 
@@ -146,17 +163,17 @@ class MainConnection(AttrManage, ColorMapping):
             matrix_wgt = MatrixMainWidget(self.main_window)
             self.matrix_tab_wgt.addTab(matrix_wgt, 'Result')
 
+    # Add new matrix and modify
     "____________________________________________________________________________________"
+    # Create Compare Widget
 
     def on_compare_matrices(self, state):
         if state:
-            self.matrix_formula.setHidden(True)
             cont_mat_wgt = self.createCompareWgt()
             self.compare_tab = self.matrix_tab_wgt.addTab(cont_mat_wgt, 'Compare')
             self.matrix_tab_wgt.setCurrentIndex(self.matrix_tab_wgt.count()-1)
 
         else:
-            self.matrix_formula.setHidden(False)
             if self.compare_tab:
                 self.matrix_tab_wgt.removeTab(self.compare_tab)
 
@@ -209,34 +226,67 @@ class MainConnection(AttrManage, ColorMapping):
 
         return cont_matrix_wgt
 
+    # Create Compare Widget
+    "____________________________________________________________________________________"
+    # Show Text Edit for formula
+
+    def on_show_formula_tab(self):
+        if not self.matrix_formula_dock.isVisible():
+            self.matrix_formula_dock.show()
+
+    # Show Text Edit for formula
+    "____________________________________________________________________________________"
+    # Change Visibility Table For Field
+
+    def on_change_table_view(self, state):
+        for index in range(self.matrix_tab_wgt.count()):
+            if self.matrix_tab_wgt.tabText(index) in ['Compare']:
+                continue
+
+            matrix_main_wgt = self.matrix_tab_wgt.widget(index)
+            matrix_main_wgt.setVisibleTable(state)
+
+    # Change Visibility Table For Field
     "____________________________________________________________________________________"
 
     def on_change_visualize_tab(self, sender):
-        if sender == self.Matrix_colorize_show:
-            self.changeVisibleMatrixColorize(self.Matrix_colorize_show.isChecked())
+        if sender == self.matrix_colorize_show:
+            self.changeVisibleMatrixColorize(self.matrix_colorize_show.isChecked())
         else:
             self.changeVisibleGraph2d(self.graph_2d_show.isChecked())
 
     def changeVisibleMatrixColorize(self, state):
         for index in range(self.matrix_tab_wgt.count()):
+            if self.matrix_tab_wgt.tabText(index) in ['Compare']:
+                continue
+
             matrix_main_wgt = self.matrix_tab_wgt.widget(index)
             matrix_main_wgt.setVisibleGraphColorize(state, self.graph_2d_show.isChecked())
 
     def changeVisibleGraph2d(self, state):
         for index in range(self.matrix_tab_wgt.count()):
+            if self.matrix_tab_wgt.tabText(index) in ['Compare']:
+                continue
+
             matrix_main_wgt = self.matrix_tab_wgt.widget(index)
-            matrix_main_wgt.setVisibleGraph2d(state, self.Matrix_colorize_show.isChecked())
+            matrix_main_wgt.setVisibleGraph2d(state, self.matrix_colorize_show.isChecked())
 
     "____________________________________________________________________________________"
 
     def on_change_graph_2d_grid(self, state):
         for index in range(self.matrix_tab_wgt.count()):
+            if self.matrix_tab_wgt.tabText(index) in ['Compare']:
+                continue
+
             matrix_main_wgt = self.matrix_tab_wgt.widget(index)
             matrix_graph_2d = matrix_main_wgt.getGraph2d()
             matrix_graph_2d.setGrid(state)
 
     def on_change_graph_2d_axis(self, state):
         for index in range(self.matrix_tab_wgt.count()):
+            if self.matrix_tab_wgt.tabText(index) in ['Compare']:
+                continue
+
             matrix_main_wgt = self.matrix_tab_wgt.widget(index)
             matrix_graph_2d = matrix_main_wgt.getGraph2d()
             matrix_graph_2d.setAxis(state)

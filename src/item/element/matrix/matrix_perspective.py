@@ -5,6 +5,9 @@ from ...qtc.QtCustom import *
 
 import numpy as np
 
+# ________________________________________________________________________________
+# Widget Generators Button
+
 
 class GeneratorsMatrix(QWidget):
 
@@ -55,7 +58,6 @@ class GeneratorsMatrix(QWidget):
 
 "________________________________________________________________________________"
 "Row X Column"
-"________________________________________________________________________________"
 
 
 class SizeMatrixWgt(QWidget):
@@ -109,6 +111,9 @@ class SizeMatrixWgt(QWidget):
 
     def getColumnSb(self):
         return self.column_sb
+
+# ________________________________________________________________________________
+# Table
 
 
 class MatrixFieldEdit(QTableView):
@@ -207,6 +212,9 @@ class MatrixFieldEdit(QTableView):
                         self.standard_model.setItem(row_anchor + index_row,
                                                     column_anchor+index_col,
                                                     item)
+
+# ________________________________________________________________________________
+# Matrix Perspective
 
 
 class MatrixPerspective(QWidget):

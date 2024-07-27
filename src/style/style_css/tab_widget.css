@@ -1,0 +1,10 @@
+QTabBar[type="dark_selected"]::tab:selected {
+  background: rgb(30, 30, 30);
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+  padding: 3px;
+  margin-bottom: 0px;
+}
+QTabBar[type="dark_selected"]::tab {
+  background: rgb(45, 45, 45);
+}

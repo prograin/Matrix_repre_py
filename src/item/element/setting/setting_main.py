@@ -1,9 +1,11 @@
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
+from PyQt6.QtGui import QHideEvent
 from PyQt6.QtWidgets import *
 
 from .setting_list import SettingList
 from .setting_matrix_table import SettingMatrixTable
+from .setting_graph_2d import SettingGraph2d
 
 
 class SettingMain(QDialog):
@@ -33,11 +35,13 @@ class SettingMain(QDialog):
     def createWgt(self):
         self.setting_list = SettingList(self)
         self.matrix_table = SettingMatrixTable(self)
+        self.graph_2d = SettingGraph2d(self)
 
         self.stacked_wgt = QStackedWidget(self)
 
     def assembly(self):
         self.stacked_wgt.addWidget(self.matrix_table)
+        self.stacked_wgt.addWidget(self.graph_2d)
 
         self.h_cont_l.addWidget(self.setting_list)
         self.h_cont_l.addWidget(self.stacked_wgt)
@@ -57,3 +61,5 @@ class SettingMain(QDialog):
     def on_item_list_changed(self, item):
         if item.text() == 'Matrix Table':
             self.stacked_wgt.setCurrentWidget(self.matrix_table)
+        elif item.text() == 'Graph 2D':
+            self.stacked_wgt.setCurrentWidget(self.graph_2d)

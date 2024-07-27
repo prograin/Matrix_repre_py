@@ -63,7 +63,7 @@ class LibraryCompleter(dict):
         self.library_package[name_pkg.split('.')[-1]] = list_members
 
     def createKeywordLib(self):
-        keyword.kwlist.extend(['numpy', 'sympy', 'Result', 'ADD', 'Anim_C_AND_2D', 'Anim_C', 'Anim_2D'])
+        keyword.kwlist.extend(['numpy', 'sympy', 'Result', 'Add',  'Anim'])
 
         self.library_package['keyword'] = keyword.kwlist
 

@@ -116,6 +116,8 @@ class CollapsibleWgt(QWidget, IconPath):
 
     def __init__(self, obj_na, parent=None):
         super().__init__(parent)
+        self.setting = QSettings("MGV_SETTING", "coll")
+
         self.setAutoFillBackground(True)
         self.installEventFilter(self)
         self.setObjectName(obj_na)
@@ -125,6 +127,7 @@ class CollapsibleWgt(QWidget, IconPath):
         self.createProp()
         self.setAutoFillBackground(True)
         self.setBackgroundColor()
+        self.show()
 
     def createWgtLay(self):
         self.tb = QToolButton()
@@ -237,8 +240,6 @@ class CollapsibleWgt(QWidget, IconPath):
                 self.setStyleWidget()
 
         if event.type() == QEvent.Type.Show:
-            self.setting = QSettings("MGV_SETTING", "coll")
-
             try:
                 coll_inf = self.setting.value(self.objectName())
                 self.is_collapse = coll_inf["coll"]

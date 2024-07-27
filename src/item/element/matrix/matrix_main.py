@@ -75,10 +75,8 @@ class MatrixMainWidget(QWidget):
 
     # __________________________________________________________________
     # Visualize with animation
-
-    def createAnimation(self, array, graph_2d, colorizing_graph):
-        if graph_2d:
-            self.matrix_visualizer.setAnimation(array, graph_2d, colorizing_graph)
+    def createAnimation(self, array):
+        self.matrix_visualizer.setAnimation(array)
 
     def connectSignalSlot(self):
         if not self.is_animation:
@@ -86,7 +84,6 @@ class MatrixMainWidget(QWidget):
 
     # __________________________________________________________________
     # Visualize Matrix
-
     def on_conv_mat_to_graphic(self):
         matrix_array = self.matrix_pers.getMatrixArray()
         self.graph_colorize.visualizeMatrix(matrix_array)
@@ -94,7 +91,6 @@ class MatrixMainWidget(QWidget):
 
     # __________________________________________________________________
     # Set matrix in table
-
     def setMatrixArray(self, array):
         if not self.is_animation:
             self.matrix_pers.on_matrix_create(array=array)
@@ -102,10 +98,17 @@ class MatrixMainWidget(QWidget):
             self.matrix_array = array[-1]
 
     # __________________________________________________________________
-    # Change visible of tab visualizer
+    # Change Table View Visibility
+    def setVisibleTable(self, state):
+        try:
+            self.pers_cont_wgt.setVisible(state)
+        except:
+            pass
 
+    # __________________________________________________________________
+    # Change visible of tab visualizer
     def setVisibleGraphColorize(self, state_graph_colorize, state_graph_2d):
-        self.graph_colorize.setVisible(state_graph_colorize)
+        self.graph_colorize_wgt.setVisible(state_graph_colorize)
         if state_graph_colorize:
             self.matrix_visualizer.setVisible(True)
             self.matrix_visualizer.setCurrentIndex(0)
@@ -137,8 +140,8 @@ class MatrixMainWidget(QWidget):
                 self.matrix_visualizer.setVisible(False)
 
     def getElement(self):
-        self.graph_2d_wgt = self.matrix_visualizer.graph_2d_wgt
-        self.graph_colorize = self.matrix_visualizer.getColorizeGraphic()
+        self.graph_colorize_wgt = self.matrix_visualizer.getGraphColorWgt()
+        self.graph_colorize = self.matrix_visualizer.getgraphColor()
         self.graph_2d = self.matrix_visualizer.getGraph2d()
 
     def getMatrixArray(self):

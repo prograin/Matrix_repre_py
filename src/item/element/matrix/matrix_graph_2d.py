@@ -1,8 +1,6 @@
 from PyQt6.QtCore import *
-from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import *
-from PyQt6.QtWidgets import QWidget
 from ...qtc.QtCustom import *
 
 from ....util.u_color import UColor
@@ -11,6 +9,9 @@ import numpy as np
 
 # ___________________________________________________________________________________________
 # Item
+# ___________________________________________________________________________________________
+
+SCALE_POS_ITEM = 50
 
 
 class GraphicsItem(QGraphicsItem, UColor):
@@ -50,6 +51,12 @@ class GraphicsItem(QGraphicsItem, UColor):
     def getColor(self):
         return self.brush_color.color()
 
+    def getCorrectPos(self):
+        pos = self.pos()
+        x = round((pos.x()+(self.rectf.width()/2))/SCALE_POS_ITEM, 3)
+        y = round(-(pos.y()+(self.rectf.height()/2))/SCALE_POS_ITEM, 3)
+        return QPointF(x, y)
+
     def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: QWidget) -> None:
         if self.isSelected():
             painter.setPen(self.selected_color_pen)
@@ -61,6 +68,7 @@ class GraphicsItem(QGraphicsItem, UColor):
 
 # ___________________________________________________________________________________________
 # Scene
+# ___________________________________________________________________________________________
 
 
 class GraphicsScene(QGraphicsScene, UColor):
@@ -137,6 +145,7 @@ class GraphicsScene(QGraphicsScene, UColor):
 
 # ___________________________________________________________________________________________
 # View
+# ___________________________________________________________________________________________
 class Graph2dView(QGraphicsView):
 
     def __init__(self, parent, attr_wgt):
@@ -150,6 +159,8 @@ class Graph2dView(QGraphicsView):
         self.connectSignalSlot()
 
     def initView(self):
+        self.setting_graph_2d = QSettings('MGV', 'Graph_2d')
+
         self.createScene()
         self.createRubberBand()
         self.createInfo()
@@ -181,7 +192,6 @@ class Graph2dView(QGraphicsView):
 
     # ----------------------------------------------------------------
     # Signals slot
-
     def connectSignalSlot(self):
         self.attr.color_button.clicked.connect(self.on_change_color_items)
 
@@ -191,19 +201,21 @@ class Graph2dView(QGraphicsView):
 
     # Signals slot
     # ----------------------------------------------------------------
+    # Visualize
 
     def visualizeMatrix(self, array: np.ndarray):
         self.scene_.clear()
         self.createRubberBand()
         row_count, column_count = array.shape
 
+        size_item = self.setting_graph_2d.value('size_item', type=float)
         self.item_list = []
 
         if row_count == 2:
             for column in range(column_count):
                 vectors = array[:, column]
-                vectors = vectors*50
-                item = self.scene_.createItem(rect=QRectF(vectors[0], vectors[1], 20, 20))
+                vectors = vectors*SCALE_POS_ITEM
+                item = self.scene_.createItem(rect=QRectF(vectors[0], vectors[1], size_item, size_item))
                 self.item_list.append(item)
 
             return
@@ -211,19 +223,18 @@ class Graph2dView(QGraphicsView):
         elif column_count == 2:
             for row in range(row_count):
                 vectors = array[row, :]
-                vectors = vectors*50
+                vectors = vectors*SCALE_POS_ITEM
                 item = self.scene_.createItem(rect=QRectF(vectors[0], vectors[1], 20, 20))
                 self.item_list.append(item)
 
     # ----------------------------------------------------------------
     # Move items with Animation
-
     def moveItems(self, positions):
         row_count, column_count = positions.shape
         if row_count == 2:
             for column in range(column_count):
                 vectors = positions[:, column]
-                vectors = vectors*50
+                vectors = vectors*SCALE_POS_ITEM
                 self.item_list[column].moveTo(vectors)
 
             return
@@ -231,7 +242,7 @@ class Graph2dView(QGraphicsView):
         elif column_count == 2:
             for row in range(row_count):
                 vectors = positions[row, :]
-                vectors = vectors*50
+                vectors = vectors*SCALE_POS_ITEM
 
                 self.item_list[row].moveTo(vectors)
 
@@ -266,7 +277,6 @@ class Graph2dView(QGraphicsView):
 
     # ----------------------------------------------------------------
     # Wheel Mouse Event
-
     def wheelEvent(self, event):
         if event.angleDelta().y() > 0:
             self.scale(self.scale_factor, self.scale_factor)
@@ -278,7 +288,6 @@ class Graph2dView(QGraphicsView):
 
     # ----------------------------------------------------------------
     # Mouse Event
-
     def mousePressEvent(self, event):
         # Navigate scene
         if event.button() == Qt.MouseButton.LeftButton and event.modifiers() == Qt.KeyboardModifier.AltModifier:
@@ -293,7 +302,6 @@ class Graph2dView(QGraphicsView):
         return super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-
         # Navigate scene
         if event.buttons() & Qt.MouseButton.LeftButton and event.modifiers() == Qt.KeyboardModifier.AltModifier:
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
@@ -350,8 +358,10 @@ class Graph2dView(QGraphicsView):
 
         # Show Attribute Widget
         if len(self.scene_.selectedItems()) > 0:
+            selected_item = self.scene_.selectedItems()[-1]
             self.attr.setVisible(True)
-            self.attr.setColorButton(self.scene_.selectedItems()[-1].getColor())
+            self.attr.setColorButton(selected_item.getColor())
+            self.attr.setPositionLabel(selected_item.getCorrectPos())
 
         else:
             self.attr.setVisible(False)
@@ -360,7 +370,6 @@ class Graph2dView(QGraphicsView):
 
     # ----------------------------------------------------------------
     # Viewport Event
-
     def viewportEvent(self, event: QEvent) -> bool:
 
         # Set Info Label
@@ -372,6 +381,7 @@ class Graph2dView(QGraphicsView):
 
 # ___________________________________________________________________________________________
 # Attribute Widget
+# ___________________________________________________________________________________________
 class Graph2dAttr(QWidget):
 
     def __init__(self, parent) -> None:
@@ -383,6 +393,7 @@ class Graph2dAttr(QWidget):
         self.setPro()
 
     def createWgt(self):
+        self.Position_la = QLabel()
         self.color_la = QLabel('Color')
         self.color_button = ColoringLabel(self, QColor(100, 100, 250))
 
@@ -395,6 +406,7 @@ class Graph2dAttr(QWidget):
         self.h_color_la_l.addWidget(self.color_la)
         self.h_color_la_l.addWidget(self.color_button)
 
+        self.v_cont_l.addWidget(self.Position_la)
         self.v_cont_l.addLayout(self.h_color_la_l)
 
         self.v_cont_l.addStretch()
@@ -407,9 +419,13 @@ class Graph2dAttr(QWidget):
     def setColorButton(self, color):
         self.color_button.setColor(color)
 
+    def setPositionLabel(self, pos):
+        self.Position_la.setText('X = '+str(pos.x())+' , Y = ' + str(pos.y()))
+
 
 # ___________________________________________________________________________________________
 # Containter Widget
+# ___________________________________________________________________________________________
 
 
 class Graph2dWidget(QWidget, AttrManage):
