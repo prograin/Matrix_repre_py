@@ -1,4 +1,5 @@
 import io
+import math
 import sys
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
@@ -64,7 +65,7 @@ class MainConnection(AttrManage, ColorMapping):
         text_formula = self.matrix_formula.getText()
         matrix_count = self.matrix_tab_wgt.count()
 
-        exec_vars = {'numpy': np, 'sympy': sympy}
+        exec_vars = {'numpy': np, 'sympy': sympy, 'math': math}
         for index in range(matrix_count):
             matrix_main_wgt = self.matrix_tab_wgt.widget(index)
             matrix_array = matrix_main_wgt.getMatrixArray()
@@ -91,7 +92,7 @@ class MainConnection(AttrManage, ColorMapping):
                     list_array = exec_vars.get(var)
                     self.on_add_new_matrix(array=list_array, animation=True)
 
-                if var.startswith('ADD'):
+                if var.startswith('Add'):
                     self.on_add_new_matrix(exec_vars.get(var))
 
                 elif var == 'Result':
