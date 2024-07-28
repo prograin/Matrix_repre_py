@@ -86,5 +86,5 @@ class MatrixRepreWindow(QMainWindow, AttrManage, IconPath):
 def startApp():
     app = QApplication(sys.argv)
     window = MatrixRepreWindow()
-    window.show()
+    window.showMaximized()
     app.exec()
