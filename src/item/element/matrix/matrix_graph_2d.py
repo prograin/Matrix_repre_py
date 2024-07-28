@@ -22,8 +22,12 @@ class GraphicsItem(QGraphicsItem, UColor):
         self.rectf = rectf
 
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
+        self.initItem()
         self.ItemColor(color)
         self.moveToOrigin()
+
+    def initItem(self):
+        self.setting_graph_2d = QSettings('MGV', 'Graph_2d')
 
     def moveToOrigin(self):
         self.setPos(self.rectf.x()-self.rectf.width()/2, -self.rectf.y()-self.rectf.height()/2)
@@ -58,13 +62,18 @@ class GraphicsItem(QGraphicsItem, UColor):
         return QPointF(x, y)
 
     def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: QWidget) -> None:
+        shape = self.setting_graph_2d.value('shape_item', type=str)
+
         if self.isSelected():
             painter.setPen(self.selected_color_pen)
         else:
             painter.setPen(self.pen_color)
 
         painter.setBrush(self.brush_color)
-        painter.drawRect(0, 0, self.rectf.width(), self.rectf.height())
+        if shape == 'Rectangle':
+            painter.drawRect(0, 0, self.rectf.width(), self.rectf.height())
+        elif shape == 'Circle':
+            painter.drawEllipse(0, 0, self.rectf.width(), self.rectf.height())
 
 # ___________________________________________________________________________________________
 # Scene
