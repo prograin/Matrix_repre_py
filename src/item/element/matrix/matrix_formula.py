@@ -122,6 +122,21 @@ class MatrixFormula(QTextEdit, UTextFormula, UManageCompleter):
             self.on_complete(self.auto_completer_wgt.currentItem())
             return
 
+        # ------------------------
+        # Close Completer When selected
+        if event.key() in [Qt.Key.Key_Up, Qt.Key.Key_Down] and event.modifiers() in [Qt.KeyboardModifier.ShiftModifier]:
+            self.auto_completer_wgt.setHidden(True)
+            return super().keyPressEvent(event)
+
+        # ------------------------
+        # Change Item Completer
+        if event.key() in [Qt.Key.Key_Up, Qt.Key.Key_Down] and self.auto_completer_wgt.isVisible():
+            if event.key() == Qt.Key.Key_Up:
+                self.changeSelectedListCompleter('up')
+            elif event.key() == Qt.Key.Key_Down:
+                self.changeSelectedListCompleter('down')
+            return
+
         return super().keyPressEvent(event)
 
     # _________________________________________________________
@@ -131,12 +146,14 @@ class MatrixFormula(QTextEdit, UTextFormula, UManageCompleter):
         package_name = self.getTextDot()
 
         # ------------------------
+        # Close Completer When selected
+        if event.key() in [Qt.Key.Key_Up, Qt.Key.Key_Down] and event.modifiers() in [Qt.KeyboardModifier.ShiftModifier]:
+            self.auto_completer_wgt.setHidden(True)
+            return super().keyPressEvent(event)
+
+        # ------------------------
         # Change Item Completer
         if event.key() in [Qt.Key.Key_Up, Qt.Key.Key_Down] and self.auto_completer_wgt.isVisible():
-            if event.key() == Qt.Key.Key_Up:
-                self.changeSelectedListCompleter('up')
-            elif event.key() == Qt.Key.Key_Down:
-                self.changeSelectedListCompleter('down')
             return
 
         # ------------------------
@@ -167,6 +184,7 @@ class MatrixFormula(QTextEdit, UTextFormula, UManageCompleter):
         if source.hasText():
             text = source.text()
             self.insertPlainText(text)
+            self.document().setPlainText(self.toPlainText())
 
         else:
             super().insertFromMimeData(source)

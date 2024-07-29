@@ -12,7 +12,7 @@ class UManageCompleter():
         cursor.setPosition(self.end_word, QTextCursor.MoveMode.MoveAnchor)
         cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor)
 
-        if cursor.selectedText() in [')', ']', '}']:
+        if cursor.selectedText() in [')', ']', '}', '(', '[', '{']:
             cursor.movePosition(QTextCursor.MoveOperation.PreviousWord, QTextCursor.MoveMode.MoveAnchor)
             cursor.movePosition(QTextCursor.MoveOperation.PreviousWord, QTextCursor.MoveMode.MoveAnchor)
             cursor.select(QTextCursor.SelectionType.WordUnderCursor)
@@ -57,7 +57,7 @@ class UManageCompleter():
         self.end_word = cursor.position()
 
         cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor)
-        if cursor.selectedText() in [')', ']', '}']:
+        if cursor.selectedText() in [')', ']', '}', '(', '[', '{']:
             cursor.movePosition(QTextCursor.MoveOperation.PreviousWord, QTextCursor.MoveMode.MoveAnchor)
             cursor.movePosition(QTextCursor.MoveOperation.PreviousWord, QTextCursor.MoveMode.MoveAnchor)
             cursor.select(QTextCursor.SelectionType.WordUnderCursor)

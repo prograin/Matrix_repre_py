@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import *
 
 import inspect
 import keyword
+import builtins
 
 # ________________________________________________________________________________________
 # Dict For complete word
@@ -13,11 +14,24 @@ import keyword
 
 class LibraryCompleter(dict):
 
-    def __init__(self) -> None:
+    def __init__(self, highlighter) -> None:
         super().__init__()
+        self.highlighter = highlighter
 
-        self.library = {'module': {}, 'module_name': [], 'variable': []}
+        self.library = {'module': {}, 'module_name': [], 'variable': set(), 'function': set()}
         self.createKeywordLib()
+        self.createFunctionBuiltinLib()
+
+    def createKeywordLib(self):
+        keywords = keyword.kwlist
+        keywords.extend(['Result', 'Add',  'Anim'])
+        self.library['built_in_word'] = keywords
+
+    def createFunctionBuiltinLib(self):
+        all_builtins = dir(builtins)
+        builtin_functions = [func for func in all_builtins if callable(getattr(builtins, func))]
+
+        self.library['built_in_func'] = builtin_functions
 
     # __________________________________________________
     # Add package to dict
@@ -36,19 +50,27 @@ class LibraryCompleter(dict):
 
         for var in inspect.getmembers(pkg):
             if inspect.ismodule(var[1]):
+                self.highlighter.createClassHighlighter(var[0])
+
                 list_member_module.append(var[0])
                 if not self.createPackageLib(name_pkg+'.'+var[0]):
                     continue
 
             elif inspect.isclass(var[1]):
+                self.highlighter.createClassHighlighter(var[0])
+
                 list_member_class.append(var[0])
                 if not self.createPackageLib(name_pkg+'.'+var[0]):
                     continue
 
             elif inspect.isfunction(var[1]):
+                self.highlighter.createFunctionPackageHighlighter(var[0])
+
                 list_member_func.append(var[0])
 
             elif inspect.ismethod(var[1]):
+                self.highlighter.createFunctionPackageHighlighter(var[0])
+
                 list_member_method.append(var[0])
 
             else:
@@ -73,29 +95,41 @@ class LibraryCompleter(dict):
 
     def createPackageNameLib(self, package_name, alias_name):
         if alias_name:
+            self.highlighter.createClassHighlighter(alias_name)
+
             self.library.get('module_name').append(alias_name)
+
         else:
+            self.highlighter.createClassHighlighter(package_name)
+
             self.library.get('module_name').append(package_name)
 
-    def createVariableLib(self, variable):
-        self.library.get('variable').extend(variable)
+    def createFunctionLib(self, function):
+        self.library['function'] = self.library.get('function').union(function)
+        for func in function:
+            self.highlighter.createFunctionHighlighter(func)
 
-    def createKeywordLib(self):
-        keywords = keyword.kwlist
-        keywords.extend(['Result', 'Add',  'Anim'])
-        self.library['built_in_word'] = keywords
+    def createVariableLib(self, variable):
+        self.library['variable'] = self.library.get('variable').union(variable)
+        for var in variable:
+            self.highlighter.createVariableHighlighter(var)
 
     def clear_module(self):
         self.library.update({'module': {}})
         self.library.update({'module_name': []})
 
     def clear_variable(self):
-        self.library.update({'variable': []})
+        self.library.update({'variable': set()})
+
+    def clear_function(self):
+        self.library.update({'function': set()})
 
     def getGlobalWord(self):
         global_word = []
         global_word.extend(self.library.get('variable'))
+        global_word.extend(self.library.get('function'))
         global_word.extend(self.library.get('module_name'))
+        global_word.extend(self.library.get('built_in_func'))
         global_word.extend(self.library.get('built_in_word'))
 
         return global_word
@@ -115,7 +149,9 @@ class UAutoCompleter(QListWidget):
     def __init__(self, parent, document, highlighter) -> None:
         super().__init__(parent)
         self.document = document
+        self.highlighter = highlighter
         self.packages = []
+        self.functions = []
         self.variables = []
 
         self.initWgt()
@@ -130,23 +166,32 @@ class UAutoCompleter(QListWidget):
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
 
     def createLibrary(self):
-        self.completer = LibraryCompleter()
+        self.completer = LibraryCompleter(self.highlighter)
         self.lib_words = self.completer.library
 
     def createRegExpression(self):
         self.reg_package = QRegularExpression(r"\bimport\s+(\w+)(\s+as\s+(\w+))?")
+        self.reg_func = QRegularExpression(r"\bdef\s+(\w+)\s*\(.*\)\s*:")
         self.reg_var = QRegularExpression(r"\b\w+\b(?=\s*=)")
 
     def updateCompleter(self):
         text = self.document.toPlainText()
         packages = self.FindPackage(text)
+        functions = self.findFunction(text)
         variables = self.findVariable(text)
 
-        if packages:
+        if isinstance(packages, list):
+            self.highlighter.clearPackageHighlighting()
             self.completer.clear_module()
             self.setPackageToLib(packages)
 
-        if variables:
+        if isinstance(functions, list):
+            self.highlighter.clearFunctionHighlighting()
+            self.completer.clear_function()
+            self.setFunctionToLib(functions)
+
+        if isinstance(variables, list):
+            self.highlighter.clearVariableHighlighting()
             self.completer.clear_variable()
             self.setVariableToLib(variables)
 
@@ -173,6 +218,20 @@ class UAutoCompleter(QListWidget):
         else:
             return None
 
+    def findFunction(self, text):
+        functions = []
+
+        expression = self.reg_func.globalMatch(text)
+        while expression.hasNext():
+            match = expression.next()
+            functions.append(match.captured(1))
+
+        if functions != self.functions:
+            self.functions = functions
+            return functions
+        else:
+            return None
+
     def findVariable(self, text):
         variables = []
 
@@ -191,6 +250,9 @@ class UAutoCompleter(QListWidget):
         for package in packages:
             self.completer.createPackageNameLib(package[0], package[1])
             self.completer.createPackageLib(package[0], package[1])
+
+    def setFunctionToLib(self, functions):
+        self.completer.createFunctionLib(functions)
 
     def setVariableToLib(self, variables):
         self.completer.createVariableLib(variables)
