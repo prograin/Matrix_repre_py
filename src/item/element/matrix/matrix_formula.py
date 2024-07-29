@@ -55,7 +55,9 @@ class MatrixFormula(QTextEdit, UTextFormula, UManageCompleter):
         self.auto_completer_wgt = UAutoCompleter(self, self.document(), self.highlighter)
 
     def setPro(self):
+        self.default_font_size = 12
         self.font_ = QFont()
+        self.font_.setPointSize(self.default_font_size)
 
         self.font_.setFamily('Consolas')
         self.font_.setWordSpacing(2)
@@ -75,6 +77,25 @@ class MatrixFormula(QTextEdit, UTextFormula, UManageCompleter):
     # _________________________________________________________
     # Events
     # _________________________________________________________
+    def wheelEvent(self, event: QWheelEvent):
+        if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+            if event.angleDelta().y() > 0:
+                self.default_font_size += 1
+            else:
+                self.default_font_size -= 1
+
+            if self.default_font_size < 1:
+                self.default_font_size = 1
+
+            font = self.font()
+            font.setPointSize(self.default_font_size)
+            self.setFont(font)
+
+            # Optional: Prevent further handling of the event
+            event.accept()
+        else:
+            # Pass the event to the base class
+            super().wheelEvent(event)
 
     # _________________________________________________________
     # Mouse Release

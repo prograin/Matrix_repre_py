@@ -28,22 +28,22 @@ class UHighlighter(QSyntaxHighlighter):
         self.function_format.setForeground(QColor('yellow'))
 
         self.class_format = QTextCharFormat()
-        self.class_format.setForeground(QColor(40, 190, 40))
+        self.class_format.setForeground(QColor(137, 247, 121))
 
         self.variable_format = QTextCharFormat()
         self.variable_format.setForeground(QColor(80, 200, 200))
 
         self.quote_format = QTextCharFormat()
-        self.quote_format.setForeground(QColor("magenta"))
+        self.quote_format.setForeground(QColor(243, 121, 234))
 
         self.single_line_comment_format = QTextCharFormat()
-        self.single_line_comment_format.setForeground(QColor(40, 190, 40))
+        self.single_line_comment_format.setForeground(QColor(30, 140, 9))
 
         self.symbilic_format = QTextCharFormat()
-        self.symbilic_format.setForeground(QColor("orange"))
+        self.symbilic_format.setForeground(QColor(239, 135, 42))
 
         self.import_as_format = QTextCharFormat()
-        self.import_as_format.setForeground(QColor(40, 190, 40))
+        self.import_as_format.setForeground(QColor(137, 247, 121))
 
         self.variable_format = QTextCharFormat()
         self.variable_format.setForeground(QColor(80, 200, 200))
@@ -105,11 +105,11 @@ class UHighlighter(QSyntaxHighlighter):
 
     def highlightBlock(self, text):
         rules = []
-        rules.extend(self.highlighting_rules)
         rules.extend(self.class_highlighting_rules)
         rules.extend(self.function_package_highlighting_rules)
         rules.extend(self.function_highlighting_rules)
         rules.extend(self.variable_highlighting_rules)
+        rules.extend(self.highlighting_rules)
         for pattern, format in rules:
             expression = pattern.globalMatch(text)
 
