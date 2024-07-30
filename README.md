@@ -26,5 +26,5 @@ To run the application, execute the `run.py` file located in the `src` folder.
 - Animation support for matrix colorization and 2D graphics
 
 
-Version: 1.0
+Version: 0.3.0
 Date: July 28, 2024
