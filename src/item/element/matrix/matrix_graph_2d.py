@@ -82,14 +82,14 @@ class GraphicsItem(QGraphicsItem, UColor):
 
 class GraphicsScene(QGraphicsScene, UColor):
 
-    def __init__(self):
+    def __init__(self, grid_state, axis_state):
         super().__init__()
         self.initScene()
 
         self.grid_size = 100
 
-        self.grid = False
-        self.axis = True
+        self.grid = grid_state
+        self.axis = axis_state
 
     def initScene(self):
         self.setSceneRect(1, 1, 1, 1)
@@ -155,17 +155,24 @@ class GraphicsScene(QGraphicsScene, UColor):
 # ___________________________________________________________________________________________
 # View
 # ___________________________________________________________________________________________
-class Graph2dView(QGraphicsView):
+class Graph2dView(QGraphicsView, AttrManage):
 
     def __init__(self, parent, attr_wgt):
         super().__init__(parent)
+        self.main_window = self.getMainWindow()
+
         self.position = QPointF(0, 0)
         self.scale_factor = 1.15
         self.attr = attr_wgt
 
+        self.getElement()
         self.initView()
         self.setPro()
         self.connectSignalSlot()
+
+    def getElement(self):
+        self.graph_2d_grid: QAction = self.main_window.findChild(QAction, 'GRAPH_2D_GRID')
+        self.graph_2d_axis: QAction = self.main_window.findChild(QAction, 'GRAPH_2D_AXIS')
 
     def initView(self):
         self.setting_graph_2d = QSettings('MGV', 'Graph_2d')
@@ -179,7 +186,7 @@ class Graph2dView(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
 
     def createScene(self):
-        self.scene_ = GraphicsScene()
+        self.scene_ = GraphicsScene(self.graph_2d_grid.isChecked(), self.graph_2d_axis.isChecked())
         self.setScene(self.scene_)
 
     def createRubberBand(self):
@@ -233,7 +240,7 @@ class Graph2dView(QGraphicsView):
             for row in range(row_count):
                 vectors = array[row, :]
                 vectors = vectors*SCALE_POS_ITEM
-                item = self.scene_.createItem(rect=QRectF(vectors[0], vectors[1], 20, 20))
+                item = self.scene_.createItem(rect=QRectF(vectors[0], vectors[1], size_item, size_item))
                 self.item_list.append(item)
 
     # ----------------------------------------------------------------

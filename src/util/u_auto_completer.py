@@ -46,6 +46,7 @@ class LibraryCompleter(dict):
         list_member_method = []
         list_member_func = []
         list_member_module = []
+        list_member_variable = []
         list_member_other = []
 
         for var in inspect.getmembers(pkg):
@@ -73,6 +74,16 @@ class LibraryCompleter(dict):
 
                 list_member_method.append(var[0])
 
+            elif callable(var[1]):
+                self.highlighter.createFunctionPackageHighlighter(var[0])
+
+                list_member_method.append(var[0])
+
+            elif type(var[1]) in [float, int]:
+                self.highlighter.createVariablePackageHighlighter(var[0])
+
+                list_member_variable.append(var[0])
+
             else:
                 list_member_other.append(var[0])
 
@@ -80,6 +91,7 @@ class LibraryCompleter(dict):
         list_members.extend(list_member_method)
         list_members.extend(list_member_func)
         list_members.extend(list_member_module)
+        list_members.extend(list_member_variable)
         list_members.extend(list_member_other)
 
         if alias_name:

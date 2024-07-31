@@ -14,4 +14,4 @@ class SettingList(QListWidget):
         self.setFixedWidth(150)
 
     def createList(self):
-        self.addItems(['Matrix Table', 'Graph 2D'])
+        self.addItems(['Matrix Table', 'Graph 2D', 'Animation'])

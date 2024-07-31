@@ -12,6 +12,7 @@ class UHighlighter(QSyntaxHighlighter):
         self.highlighting_rules = []
         self.class_highlighting_rules = []
         self.function_package_highlighting_rules = []
+        self.variable_package_highlighting_rules = []
         self.function_highlighting_rules = []
         self.variable_highlighting_rules = []
 
@@ -85,6 +86,9 @@ class UHighlighter(QSyntaxHighlighter):
     def createFunctionPackageHighlighter(self, name_func):
         self.function_package_highlighting_rules.append((QRegularExpression(f'\\b{name_func}\\b'), self.function_format))
 
+    def createVariablePackageHighlighter(self, name_var):
+        self.variable_package_highlighting_rules.append((QRegularExpression(f'\\b{name_var}\\b'), self.variable_format))
+
     def createFunctionHighlighter(self, name_func):
         self.function_highlighting_rules.append((QRegularExpression(f'\\b{name_func}\\b'), self.function_format))
 
@@ -94,6 +98,7 @@ class UHighlighter(QSyntaxHighlighter):
     def clearPackageHighlighting(self):
         self.class_highlighting_rules = []
         self.function_package_highlighting_rules = []
+        self.variable_package_highlighting_rules = []
 
     def clearFunctionHighlighting(self):
         self.function_highlighting_rules = []
@@ -109,6 +114,7 @@ class UHighlighter(QSyntaxHighlighter):
         rules.extend(self.function_package_highlighting_rules)
         rules.extend(self.function_highlighting_rules)
         rules.extend(self.variable_highlighting_rules)
+        rules.extend(self.variable_package_highlighting_rules)
         rules.extend(self.highlighting_rules)
         for pattern, format in rules:
             expression = pattern.globalMatch(text)

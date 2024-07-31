@@ -399,6 +399,7 @@ class AnimationTimeLine(QWidget):
     def __init__(self, parent) -> None:
         super().__init__(parent)
         self.is_playing = False
+        self.animation_setting = QSettings('MGV', 'Animation')
 
         self.createLay()
         self.createWidget()
@@ -447,7 +448,7 @@ class AnimationTimeLine(QWidget):
             self.play_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay))
 
         else:
-            self.timer.start(100)
+            self.timer.start(42)
             self.play_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPause))
             if self.time_slider.value() == self.time_slider.maximum():
                 self.time_slider.setValue(0)
@@ -459,6 +460,9 @@ class AnimationTimeLine(QWidget):
         if value < self.time_slider.maximum():
             self.time_slider.setValue(value+1)
         else:
-            self.timer.stop()
-            self.play_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay))
-            self.is_playing = False
+            if self.animation_setting.value('loop_play', type=bool):
+                self.time_slider.setValue(0)
+            else:
+                self.timer.stop()
+                self.play_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay))
+                self.is_playing = False

@@ -23,11 +23,13 @@ class Settingmanage():
         self.setting_core = QSettings('MGV', 'Core')
         self.setting_matrix_table = QSettings('MGV', 'Matrix_Table')
         self.setting_graph_2d = QSettings('MGV', 'Graph_2d')
+        self.setting_animation = QSettings('MGV', 'Animation')
 
         max_field_value = 5
         min_field_value = -5
         size_item_value = 50
         visible_limitation = True
+        loop_play = False
         shape_item_value = 'Rectangle'
 
         if self.setting_core.value('start') == 1:
@@ -39,5 +41,7 @@ class Settingmanage():
 
             self.setting_graph_2d.setValue('size_item', size_item_value)
             self.setting_graph_2d.setValue('shape_item', shape_item_value)
+
+            self.setting_animation.setValue('loop_play', loop_play)
 
             self.setting_core.setValue('start', 1)

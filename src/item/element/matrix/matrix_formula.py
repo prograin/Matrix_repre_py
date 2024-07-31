@@ -145,7 +145,7 @@ class MatrixFormula(QTextEdit, UTextFormula, UManageCompleter):
 
         # ------------------------
         # Close Completer When selected
-        if event.key() in [Qt.Key.Key_Up, Qt.Key.Key_Down] and event.modifiers() in [Qt.KeyboardModifier.ShiftModifier]:
+        if event.key() in [Qt.Key.Key_Up, Qt.Key.Key_Down, Qt.Key.Key_Right, Qt.Key.Key_Left] and event.modifiers() in [Qt.KeyboardModifier.ShiftModifier, Qt.KeyboardModifier.ControlModifier]:
             self.auto_completer_wgt.setHidden(True)
             return super().keyPressEvent(event)
 
@@ -158,6 +158,10 @@ class MatrixFormula(QTextEdit, UTextFormula, UManageCompleter):
                 self.changeSelectedListCompleter('down')
             return
 
+        elif event.key() in [Qt.Key.Key_Up, Qt.Key.Key_Down, Qt.Key.Key_Right, Qt.Key.Key_Left] and self.auto_completer_wgt.isHidden():
+            self.auto_completer_wgt.setHidden(True)
+            return super().keyPressEvent(event)
+
         return super().keyPressEvent(event)
 
     # _________________________________________________________
@@ -168,7 +172,7 @@ class MatrixFormula(QTextEdit, UTextFormula, UManageCompleter):
 
         # ------------------------
         # Close Completer When selected
-        if event.key() in [Qt.Key.Key_Up, Qt.Key.Key_Down] and event.modifiers() in [Qt.KeyboardModifier.ShiftModifier]:
+        if event.key() in [Qt.Key.Key_Up, Qt.Key.Key_Down, Qt.Key.Key_Right, Qt.Key.Key_Left] and event.modifiers() in [Qt.KeyboardModifier.ShiftModifier, Qt.KeyboardModifier.ControlModifier]:
             self.auto_completer_wgt.setHidden(True)
             return super().keyPressEvent(event)
 
@@ -176,6 +180,10 @@ class MatrixFormula(QTextEdit, UTextFormula, UManageCompleter):
         # Change Item Completer
         if event.key() in [Qt.Key.Key_Up, Qt.Key.Key_Down] and self.auto_completer_wgt.isVisible():
             return
+
+        elif event.key() in [Qt.Key.Key_Up, Qt.Key.Key_Down, Qt.Key.Key_Right, Qt.Key.Key_Left] and self.auto_completer_wgt.isHidden():
+            self.auto_completer_wgt.setHidden(True)
+            return super().keyPressEvent(event)
 
         # ------------------------
         # Close  Completer
@@ -203,9 +211,13 @@ class MatrixFormula(QTextEdit, UTextFormula, UManageCompleter):
     # Paste Event
     def insertFromMimeData(self, source: QMimeData):
         if source.hasText():
+            tc = self.textCursor()
+            pos = tc.position()
             text = source.text()
-            self.insertPlainText(text)
-            self.document().setPlainText(self.toPlainText())
+            tc.insertText(text)
+            tc.setPosition(pos, QTextCursor.MoveMode.MoveAnchor)
+            self.setTextCursor(tc)
+            self.highlighter.rehighlight()
 
         else:
             super().insertFromMimeData(source)

@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import *
 from .setting_list import SettingList
 from .setting_matrix_table import SettingMatrixTable
 from .setting_graph_2d import SettingGraph2d
+from .setting_animation import SettingAnimation
 
 
 class SettingMain(QDialog):
@@ -36,12 +37,14 @@ class SettingMain(QDialog):
         self.setting_list = SettingList(self)
         self.matrix_table = SettingMatrixTable(self)
         self.graph_2d = SettingGraph2d(self)
+        self.animation = SettingAnimation(self)
 
         self.stacked_wgt = QStackedWidget(self)
 
     def assembly(self):
         self.stacked_wgt.addWidget(self.matrix_table)
         self.stacked_wgt.addWidget(self.graph_2d)
+        self.stacked_wgt.addWidget(self.animation)
 
         self.h_cont_l.addWidget(self.setting_list)
         self.h_cont_l.addWidget(self.stacked_wgt)
@@ -63,3 +66,5 @@ class SettingMain(QDialog):
             self.stacked_wgt.setCurrentWidget(self.matrix_table)
         elif item.text() == 'Graph 2D':
             self.stacked_wgt.setCurrentWidget(self.graph_2d)
+        elif item.text() == 'Animation':
+            self.stacked_wgt.setCurrentWidget(self.animation)
